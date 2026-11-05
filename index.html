@@ -39,6 +39,15 @@
           </div>
           <div class="section-title">ออเดอร์ล่าสุด <span class="link" onclick="show('orders')">ดูทั้งหมด</span></div>
           <div id="dashboard-recent-orders"></div>
+
+          <!-- AI Business Analysis -->
+          <div style="margin:12px 0 70px">
+            <button class="outline" id="btn-ai-analyze" style="width:100%;font-size:13px;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px;border-color:#c8e6f8;color:#1565c0">
+              🤖 วิเคราะห์ธุรกิจ AI
+            </button>
+            <div id="ai-analysis-panel" style="display:none;margin-top:8px"></div>
+          </div>
+
           <button class="primary float-add" onclick="show('create')">＋ สร้างออเดอร์</button>
         </div>
         <nav class="bottom">
@@ -141,6 +150,13 @@
           </div>
 
           <div class="sticky">
+            <!-- AI Price Suggestion -->
+            <div style="margin-bottom:8px">
+              <button class="outline" id="btn-ai-suggest" style="width:100%;font-size:13px;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px;border-color:#c8e6f8;color:#1565c0">
+                🤖 AI แนะนำราคาขาย
+              </button>
+              <div id="ai-suggestion-panel" style="display:none;margin-top:8px"></div>
+            </div>
             <button class="primary" onclick="calculateOrder()">คำนวณราคา & บันทึกออเดอร์</button>
           </div>
         </div>
@@ -545,6 +561,7 @@
   <script src="status-ui.js"></script>
   <script src="supabase-storage.js"></script>
   <script src="auth.js"></script>
+  <script src="ai.js"></script>
   <script src="settings-ui.js"></script>
   <script src="backup.js"></script>
   <script src="app.js"></script>

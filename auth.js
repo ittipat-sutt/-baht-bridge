@@ -165,7 +165,6 @@
 
   // ─── Sign Out ───────────────────────────────────────────────────────────────
   async function signOut() {
-    const sb = getSupabase();
     if (sb) {
       try {
         await sb.auth.signOut();
@@ -194,34 +193,44 @@
   // ─── Delete Account (Double Confirmation) ───────────────────────────────────
   async function deleteAccount() {
     const sb = getSupabase();
-    if (!sb || !currentUser) {
-      notify('ไม่พบเซสชันผู้ใช้ปัจจุบัน', 'warning');
-      return;
-    }
 
     // ยืนยันสองครั้งเพื่อความปลอดภัย
-    const firstConfirm = confirm('⚠️ คำเตือน: คุณต้องการลบบัญชีและข้อมูลทั้งหมดใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้');
+    const firstConfirm = confirm('⚠️ คำเตือน: คุณต้องการลบข้อมูลทั้งหมดในเครื่องใช่หรือไม่? การกระทำนี้ไม่สามารถย้อนกลับได้');
     if (!firstConfirm) return;
 
-    const secondConfirm = confirm('🚨 ยืนยันครั้งสุดท้าย: ข้อมูลคำสั่งซื้อ ลูกค้า และการตั้งค่าทั้งหมดของคุณจะถูกลบถาวรทันที ยืนยันลบบัญชีใช่หรือไม่?');
+    const secondConfirm = confirm('🚨 ยืนยันครั้งสุดท้าย: ข้อมูลคำสั่งซื้อ ลูกค้า และการตั้งค่าทั้งหมดจะถูกลบถาวรทันที ยืนยันลบข้อมูลใช่หรือไม่?');
     if (!secondConfirm) return;
 
-    try {
-      // ลบข้อมูลร้านค้าในตาราง merchants (Cascade RLS จะลบ orders, items, settings อัตโนมัติ)
-      const { error } = await sb
-        .from('merchants')
-        .delete()
-        .eq('merchant_id', currentUser.id);
-
-      if (error) {
-        console.warn('Delete merchant error:', error);
+    // ถ้า Supabase เชื่อมต่ออยู่ — ลบข้อมูลบนคลาวด์ด้วย
+    if (sb && currentUser) {
+      try {
+        const { error } = await sb
+          .from('merchants')
+          .delete()
+          .eq('merchant_id', currentUser.id);
+        if (error) console.warn('Delete merchant error:', error);
+      } catch (err) {
+        console.warn('deleteAccount cloud error:', err);
       }
+    }
 
-      await signOut();
-      notify('ลบบัญชีและข้อมูลทั้งหมดสำเร็จ', 'success');
-    } catch (err) {
-      console.error('deleteAccount error:', err);
-      notify(`เกิดข้อผิดพลาดในการลบบัญชี: ${err.message}`, 'error');
+    // ลบข้อมูลในเครื่องทั้งหมด (ทำงานได้แม้ไม่มี Supabase)
+    try {
+      const keysToRemove = [];
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith('bahtbridge') || key && key.startsWith('bb_')) {
+          keysToRemove.push(key);
+        }
+      }
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+    } catch (_) {}
+
+    currentUser = null;
+    notify('ลบข้อมูลทั้งหมดในเครื่องสำเร็จ', 'success');
+
+    if (typeof window !== 'undefined') {
+      window.location.reload();
     }
   }
 
@@ -289,6 +298,10 @@
   // ─── Init Listener on Startup ───────────────────────────────────────────────
   async function init() {
     const sb = getSupabase();
+
+    // Always bind UI buttons (even without Supabase — delete account clears localStorage)
+    setupAuthUI();
+
     if (!sb) return;
 
     try {

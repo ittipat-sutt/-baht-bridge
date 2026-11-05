@@ -1,0 +1,47 @@
+name: CI — BahtBridge
+
+on:
+  push:
+    branches: [ main, 'feature/**', 'fix/**' ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test-and-build:
+    name: Test & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Run build
+        run: npm run build
+
+      - name: Verify www/ output
+        run: |
+          ls -la www/
+          test -f www/index.html && echo "✅ index.html OK"
+          test -f www/app.js    && echo "✅ app.js OK"
+          test -f www/styles.css && echo "✅ styles.css OK"
+          test -f www/sw.js     && echo "✅ sw.js OK"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: bahtbridge-www
+          path: www/
+          retention-days: 7
+

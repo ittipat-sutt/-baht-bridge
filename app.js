@@ -155,6 +155,14 @@ const productIcons = ['👟', '🧸', '👕', '🎧', '⌚', '🎒', '🕶️', 
 
 // ─── Draft Products in Create Form ────────────────────────────────────────────
 let draftProducts = [];
+
+// expose to AIService so it can read current items
+if (typeof window !== 'undefined') {
+  Object.defineProperty(window, 'currentItems', {
+    get: () => draftProducts,
+    configurable: true,
+  });
+}
 let activeViewingOrder = null;
 
 const money = (amount) => `฿ ${Number(amount || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
@@ -831,6 +839,11 @@ function importOrdersData(event) {
 document.addEventListener('DOMContentLoaded', async () => {
   if (typeof AuthService !== 'undefined') {
     await AuthService.init();
+  }
+
+  // init AI service (binds #btn-ai-suggest and #btn-ai-analyze)
+  if (typeof AIService !== 'undefined') {
+    AIService.init();
   }
 
   await setupOrderForm();
