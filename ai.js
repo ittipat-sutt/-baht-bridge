@@ -15,11 +15,13 @@
   'use strict';
 
   // ─── Config ─────────────────────────────────────────────────────────────────
-  const GEMINI_MODEL = 'gemini-3.8-flash';
-  const GEMINI_ENDPOINT =
-    'https://generativelanguage.googleapis.com/v1beta/models/' +
-    GEMINI_MODEL +
-    ':generateContent';
+  // รายชื่อโมเดลเรียงตามลำดับ (Auto-Fallback เมื่อโมเดลใดติด Rate-limit หรือ High Demand)
+  const CANDIDATE_MODELS = [
+    'gemini-2.5-flash',
+    'gemini-2.5-pro',
+    'gemini-3.8-flash',
+    'gemini-1.5-flash',
+  ];
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
   function getApiKey() {
@@ -42,7 +44,7 @@
   }
 
   /**
-   * ส่ง prompt ไปยัง Gemini API และรับ text response
+   * ส่ง prompt ไปยัง Gemini API พร้อมระบบ Auto-Fallback ลองโมเดลถัดไปทันที
    * @param {string} prompt
    * @returns {Promise<string>}
    */
@@ -50,26 +52,43 @@
     const key = getApiKey();
     if (!key) throw new Error('GEMINI_API_KEY ไม่ได้ตั้งค่า');
 
-    const res = await fetch(`${GEMINI_ENDPOINT}?key=${key}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ parts: [{ text: prompt }] }],
-        generationConfig: {
-          temperature: 0.3,
-          maxOutputTokens: 1024,
-        },
-      }),
-    });
+    let lastError = null;
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err?.error?.message || `HTTP ${res.status}`);
+    for (const model of CANDIDATE_MODELS) {
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.3,
+              maxOutputTokens: 1024,
+            },
+          }),
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          if (text) {
+            console.log(`🤖 [Gemini AI] Success with model: ${model}`);
+            return text.trim();
+          }
+        }
+
+        const errData = await res.json().catch(() => ({}));
+        const errMsg = errData?.error?.message || `HTTP ${res.status}`;
+        console.warn(`⚠️ [Gemini AI] Model ${model} returned: ${errMsg}, trying next...`);
+        lastError = new Error(errMsg);
+      } catch (networkErr) {
+        console.warn(`⚠️ [Gemini AI] Model ${model} network error: ${networkErr.message}`);
+        lastError = networkErr;
+      }
     }
 
-    const data = await res.json();
-    const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
-    return text.trim();
+    throw lastError || new Error('ไม่สามารถเรียกใช้งานโมเดล AI ได้');
   }
 
   // ─── Feature 1: แนะนำราคาขาย ────────────────────────────────────────────────
