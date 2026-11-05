@@ -221,9 +221,30 @@ ${itemsSummary}
 ]`;
 
     const raw = await callGemini(prompt);
-    const match = raw.match(/\[[\s\S]*\]/);
-    if (!match) throw new Error('AI ส่งผลลัพธ์รูปแบบไม่ถูกต้อง');
-    return JSON.parse(match[0]);
+    console.log('🤖 [Gemini Shopping Trip Response]:', raw);
+
+    // Clean markdown code blocks if present (```json ... ```)
+    const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+    try {
+      // First try direct parse
+      return JSON.parse(cleaned);
+    } catch (_) {
+      // Second try: extract array bracket [...]
+      const match = cleaned.match(/\[[\s\S]*\]/);
+      if (match) {
+        return JSON.parse(match[0]);
+      }
+      // Third try: if model returned an object with stores/items key { "stores": [...] }
+      const objMatch = cleaned.match(/\{[\s\S]*\}/);
+      if (objMatch) {
+        const parsedObj = JSON.parse(objMatch[0]);
+        if (Array.isArray(parsedObj.stores)) return parsedObj.stores;
+        if (Array.isArray(parsedObj.trips)) return parsedObj.trips;
+        if (Array.isArray(parsedObj.data)) return parsedObj.data;
+      }
+      throw new Error('AI ตอบกลับด้วยข้อความที่ไม่ตรงรูปแบบ JSON');
+    }
   }
 
   // ─── UI: แสดง AI Shopping Trip Modal/Panel ─────────────────────────────────
