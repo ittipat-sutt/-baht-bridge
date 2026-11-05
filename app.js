@@ -484,6 +484,10 @@ function populateDetailScreen(order) {
   if (confirmBtn) {
     confirmBtn.textContent = order.isDraft ? 'บันทึก & ยืนยันออเดอร์' : 'อัปเดตสถานะเป็นยืนยันแล้ว';
   }
+  // Person 2 hook: Mount StatusUI controls (stepper, payments, shipments, timeline)
+  if (typeof window !== 'undefined' && window.StatusUI) {
+    window.StatusUI.mount(order);
+  }
 }
 
 // ─── Populate Customer View Screen ────────────────────────────────────────────
@@ -626,6 +630,10 @@ async function renderDashboard() {
   if (totalEl) totalEl.textContent = totalCount;
   if (pendingEl) pendingEl.textContent = pendingCount;
   if (salesEl) salesEl.textContent = money(totalSales);
+  // Person 2 hook: Mount Dashboard status and receivable stats
+  if (typeof window !== 'undefined' && window.StatusUI) {
+    window.StatusUI.mountDashboard(orders);
+  }
 
   const listEl = document.getElementById('dashboard-recent-orders');
   if (!listEl) return;
@@ -657,6 +665,10 @@ async function renderDashboard() {
 // ─── Render Orders List ───────────────────────────────────────────────────────
 async function renderOrdersList() {
   const orders = await Storage.getOrders();
+  // Person 2 hook: Mount status filter chips
+  if (typeof window !== 'undefined' && window.StatusUI) {
+    window.StatusUI.mountOrdersFilter(orders);
+  }
   const listEl = document.getElementById('orders-list');
   if (!listEl) return;
 
@@ -743,7 +755,10 @@ function shareOrderSummary() {
   if (!activeViewingOrder) return;
   const o = activeViewingOrder;
   const totals = Pricing.calcOrderTotals(o);
-  const text = `🛍️ สรุปออเดอร์ ${o.id || ''}\nลูกค้า: ${o.customerName}\nเบอร์โทร: ${o.customerPhone}\nยอดชำระ: ${money(totals.totalThb)}\n(BahtBridge)`;
+  // Person 2 hook: Build comprehensive customer share text
+  const text = (typeof Status !== 'undefined' && Status.buildShareText)
+    ? Status.buildShareText(o)
+    : `🛍️ สรุปออเดอร์ ${o.id || ''}\nลูกค้า: ${o.customerName}\nเบอร์โทร: ${o.customerPhone}\nยอดชำระ: ${money(totals.totalThb)}\n(BahtBridge)`;
 
   if (navigator.share) {
     navigator.share({ title: 'BahtBridge Order', text }).catch(() => {});
