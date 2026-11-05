@@ -48,7 +48,11 @@
         }, 2800);
         return;
       }
-      alert(message);
+      if (typeof alert === 'function') {
+        alert(message);
+      } else {
+        console.log(`[Backup ${type}] ${message}`);
+      }
     }
   }
 

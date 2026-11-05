@@ -60,8 +60,10 @@
   function notify(msg, type = 'info') {
     if (typeof window !== 'undefined' && window.UI && typeof window.UI.showToast === 'function') {
       window.UI.showToast(msg, type);
-    } else {
+    } else if (typeof alert === 'function') {
       alert(msg);
+    } else {
+      console.log(`[Auth ${type}] ${msg}`);
     }
   }
 
@@ -165,6 +167,7 @@
 
   // ─── Sign Out ───────────────────────────────────────────────────────────────
   async function signOut() {
+    const sb = getSupabase();
     if (sb) {
       try {
         await sb.auth.signOut();
