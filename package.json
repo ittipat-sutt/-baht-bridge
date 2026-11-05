@@ -5,6 +5,15 @@
   "description": "BahtBridge mobile UX/UI prototype",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "node build.js",
+    "test": "node --test tests/",
+    "cap:sync": "node build.js && npx cap sync",
+    "cap:build": "node build.js && npx cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^8.6.0",
+    "@capacitor/cli": "^8.6.0",
+    "@capacitor/core": "^8.6.0"
   }
 }

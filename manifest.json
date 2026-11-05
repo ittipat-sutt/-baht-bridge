@@ -1,0 +1,20 @@
+{
+  "name": "BahtBridge — จัดการออเดอร์ต่างประเทศ",
+  "short_name": "BahtBridge",
+  "description": "Mobile App สำหรับคำนวณอัตราแลกเปลี่ยนแปลงเป็นเงินบาท และจัดการออเดอร์ลูกค้า",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f3f6fa",
+  "theme_color": "#102d5c",
+  "orientation": "portrait-primary",
+  "categories": ["business", "finance", "productivity"],
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
+

@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+package-lock.json.bak
+
+# Secrets & Configs
+.env
+config.js
+
+# Build outputs
+www/
+dist/
+build/
+*.apk
+BahtBridge.apk
+
+# Android build & SDK artifacts
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+android/.idea/
+android/*.iml
+android/app/*.iml
+
+# System & logs
+*.log
+.DS_Store
+Thumbs.db
+.temp/

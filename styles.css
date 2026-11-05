@@ -5,7 +5,6 @@
 /* Action bars are part of the page flow, so they never cover order content. */
 .sticky{position:static;margin-top:16px;padding:0;background:transparent;z-index:auto}
 
-
 /* ==========================================================================
    2A: Base CSS & UI Components (Branch: feature/ui-components)
    ========================================================================== */

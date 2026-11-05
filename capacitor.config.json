@@ -1,0 +1,9 @@
+{
+  "appId": "com.bahtbridge.app",
+  "appName": "BahtBridge",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}
+
