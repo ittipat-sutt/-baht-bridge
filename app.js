@@ -846,6 +846,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     AIService.init();
   }
 
+  // init Firebase Firestore Realtime Database
+  if (typeof FirebaseDB !== 'undefined') {
+    FirebaseDB.init();
+  }
+
   await setupOrderForm();
   await renderCreateProducts();
   await renderDashboard();

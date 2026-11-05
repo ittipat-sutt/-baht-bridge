@@ -315,6 +315,12 @@
     }
 
     backend.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+
+    // Realtime Cloud Sync: Push to Firebase Firestore in background if available
+    if (typeof window !== 'undefined' && window.FirebaseDB && typeof window.FirebaseDB.saveOrder === 'function') {
+      window.FirebaseDB.saveOrder(migrated).catch(err => console.warn('Firebase saveOrder background sync:', err));
+    }
+
     return migrated;
   }
 
@@ -332,6 +338,12 @@
 
     if (remaining.length !== initLen) {
       backend.setItem(ORDERS_STORAGE_KEY, JSON.stringify(remaining));
+
+      // Realtime Cloud Sync: Delete from Firebase Firestore if available
+      if (typeof window !== 'undefined' && window.FirebaseDB && typeof window.FirebaseDB.deleteOrder === 'function') {
+        window.FirebaseDB.deleteOrder(id).catch(err => console.warn('Firebase deleteOrder background sync:', err));
+      }
+
       return true;
     }
     return false;
