@@ -801,6 +801,10 @@ function importOrdersData(event) {
 
 // ─── Initialize Application ───────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', async () => {
+  if (typeof AuthService !== 'undefined') {
+    await AuthService.init();
+  }
+
   await setupOrderForm();
   await renderCreateProducts();
   await renderDashboard();

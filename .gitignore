@@ -1,3 +1,6 @@
+# Configuration & Secrets
+config.js
+
 # Dependencies
 node_modules/
 package-lock.json.bak
