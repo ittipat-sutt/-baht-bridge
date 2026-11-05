@@ -1,4 +1,4 @@
-name: CI — BahtBridge
+name: CI/CD Pipeline — BahtBridge
 
 on:
   push:
@@ -7,8 +7,11 @@ on:
     branches: [ main ]
 
 jobs:
-  test-and-build:
-    name: Test & Build
+  # =========================================================================
+  # Job 1: Test & Code Coverage Verification
+  # =========================================================================
+  test-and-coverage:
+    name: 🧪 Run Tests & Verify Coverage (≥ 70%)
     runs-on: ubuntu-latest
 
     steps:
@@ -24,24 +27,108 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Run unit tests
+      - name: Run all 4 test categories (Unit, Widget, Integration, Security)
         run: npm test
 
-      - name: Run build
+      - name: Run Coverage & Enforce Threshold
+        run: npm run test:coverage
+
+      - name: Code Security Scan (Check leaked keys)
+        run: |
+          echo "Scanning for sensitive credentials..."
+          if grep -rn "service_role" --exclude-dir=node_modules --exclude-dir=.git .; then
+            echo "❌ Found forbidden service_role key!"
+            exit 1
+          fi
+          echo "✅ No sensitive keys detected."
+
+  # =========================================================================
+  # Job 2: Web Build & Asset Integrity Check
+  # =========================================================================
+  build-web:
+    name: 🌐 Build Web App & Assets
+    needs: test-and-coverage
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Web Production Files
         run: npm run build
 
-      - name: Verify www/ output
+      - name: Verify www/ structure and integrity
         run: |
-          ls -la www/
-          test -f www/index.html && echo "✅ index.html OK"
-          test -f www/app.js    && echo "✅ app.js OK"
-          test -f www/styles.css && echo "✅ styles.css OK"
-          test -f www/sw.js     && echo "✅ sw.js OK"
+          echo "Verifying www directory..."
+          test -f www/index.html && echo "✅ www/index.html OK"
+          test -f www/app.js    && echo "✅ www/app.js OK"
+          test -f www/ai.js     && echo "✅ www/ai.js OK"
+          test -f www/pricing.js && echo "✅ www/pricing.js OK"
+          test -f www/storage.js && echo "✅ www/storage.js OK"
+          test -f www/styles.css && echo "✅ www/styles.css OK"
+          test -f www/sw.js     && echo "✅ www/sw.js OK"
 
-      - name: Upload build artifact
+      - name: Upload Web Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: bahtbridge-www
+          name: bahtbridge-web-dist
           path: www/
           retention-days: 7
 
+  # =========================================================================
+  # Job 3: Automated Android APK Build
+  # =========================================================================
+  build-android:
+    name: 🤖 Compile Android APK (.apk)
+    needs: build-web
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java 21 (JDK)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Web & Sync to Capacitor Android
+        run: npm run cap:sync
+
+      - name: Make Gradle Wrapper executable
+        run: chmod +x android/gradlew
+
+      - name: Build Android Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --stacktrace
+          cd ..
+
+      - name: Upload BahtBridge.apk as Release Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: BahtBridge-Android-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 14
