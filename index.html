@@ -68,8 +68,8 @@
             </div>
             <div class="two">
               <div class="field">
-                <label>เบอร์โทรศัพท์</label>
-                <input class="input" id="cust-phone" placeholder="เช่น 081-234-5678" />
+                <label>เบอร์โทรศัพท์ (ไม่เกิน 10 หลัก)</label>
+                <input class="input" id="cust-phone" type="tel" inputmode="numeric" maxlength="10" placeholder="เช่น 0812345678" oninput="this.value=this.value.replace(/\D/g,'').slice(0,10)" />
               </div>
               <div class="field">
                 <label>ช่องทางติดต่อ/ที่อยู่</label>

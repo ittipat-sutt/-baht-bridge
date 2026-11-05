@@ -290,7 +290,7 @@ async function setupOrderForm() {
 // ─── Calculate & Prepare Order Detail (Lock Rates) ────────────────────────────
 async function calculateOrder() {
   const custName = (document.getElementById('cust-name')?.value || '').trim();
-  const custPhone = (document.getElementById('cust-phone')?.value || '').trim();
+  let custPhone = (document.getElementById('cust-phone')?.value || '').trim();
   const custAddress = (document.getElementById('cust-address')?.value || '').trim();
 
   if (!custName) {
@@ -298,6 +298,19 @@ async function calculateOrder() {
     document.getElementById('cust-name')?.focus();
     return;
   }
+
+  const cleanPhone = custPhone.replace(/\D/g, '');
+  if (cleanPhone.length > 10) {
+    notify('เบอร์โทรศัพท์ต้องมีความยาวไม่เกิน 10 หลัก', 'warning');
+    document.getElementById('cust-phone')?.focus();
+    return;
+  }
+  if (cleanPhone.length > 0 && cleanPhone.length < 9) {
+    notify('เบอร์โทรศัพท์ต้องมีความยาว 9-10 หลัก', 'warning');
+    document.getElementById('cust-phone')?.focus();
+    return;
+  }
+  custPhone = cleanPhone || custPhone;
 
   if (draftProducts.length === 0) {
     notify('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ', 'warning');
