@@ -354,6 +354,14 @@
             <button class="filter-chip" data-filter="sent">ส่งแล้ว</button>
           </div>
 
+          <!-- AI Shopping Trip Grouping Button -->
+          <div style="margin-bottom:12px">
+            <button class="outline" id="btn-ai-trip" style="width:100%;font-size:13px;padding:10px;display:flex;align-items:center;justify-content:center;gap:6px;border-color:#bde0f7;color:#0d6efd;background:#f0f9ff">
+              🛍️ AI จัดกลุ่มซื้อตามร้าน (รอบทริป)
+            </button>
+            <div id="ai-trip-panel" style="display:none;margin-top:10px"></div>
+          </div>
+
           <div style="position:relative;margin-bottom:14px">
             <input class="input" id="order-search" placeholder="🔍  ค้นหาชื่อลูกค้า หรือเลขออเดอร์..." oninput="filterOrders(this.value)" style="padding-left:14px" />
             <div id="orders-list">

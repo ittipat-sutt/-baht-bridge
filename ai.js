@@ -1,6 +1,6 @@
 /**
  * BahtBridge — AI Service (ai.js)
- * Gemini API integration for AI-powered pricing advice and order analysis.
+ * Gemini API integration for AI-powered pricing advice, order analysis, and shopping trip organizer.
  * Owner: คนที่ 3 (Suvijak248)
  * Compliant with DATA_MODEL.md & HTML_CONTRACT.md
  */
@@ -56,8 +56,8 @@
       body: JSON.stringify({
         contents: [{ parts: [{ text: prompt }] }],
         generationConfig: {
-          temperature: 0.4,
-          maxOutputTokens: 512,
+          temperature: 0.3,
+          maxOutputTokens: 1024,
         },
       }),
     });
@@ -100,7 +100,6 @@
 {"suggestedPrice": <ตัวเลข>, "markup": <เปอร์เซ็นต์>, "advice": "<คำแนะนำ>"}`;
 
     const raw = await callGemini(prompt);
-    // extract JSON from response (may have markdown fences)
     const match = raw.match(/\{[\s\S]*\}/);
     if (!match) throw new Error('AI ตอบกลับในรูปแบบที่ไม่ถูกต้อง');
     return JSON.parse(match[0]);
@@ -143,11 +142,144 @@
     return await callGemini(prompt);
   }
 
-  // ─── UI: แสดง AI Panel ใน Create Order Screen ───────────────────────────────
+  // ─── Feature 3: จัดกลุ่มรายการซื้อตามร้านสำหรับรอบทริป (Shopping Trip Grouping) ─
   /**
-   * แสดงผลคำแนะนำ AI ในหน้าสร้างออเดอร์
-   * เรียกจาก onclick ของปุ่ม #btn-ai-suggest
+   * รวมสินค้าจากทุกออเดอร์แล้วจัดกลุ่มตามร้าน/ย่านการค้า เพื่อนำไปเดินช้อปจริง
+   * @param {Array} orders - รายการออเดอร์ทั้งหมด
+   * @returns {Promise<Array<{storeName: string, category: string, locationTip: string, items: Array<{name: string, totalQty: number, orders: Array<string>}>}>>}
    */
+  async function groupShoppingTrip(orders) {
+    if (!orders || orders.length === 0) {
+      throw new Error('ไม่พบข้อมูลออเดอร์สำหรับจัดทริปซื้อสินค้า');
+    }
+
+    // รวม items ทั้งหมดที่มีในออเดอร์ (เฉพาะสถานะ pending/confirmed หรือทั้งหมด)
+    const allItems = [];
+    orders.forEach(o => {
+      const orderId = o.id || 'N/A';
+      const custName = o.customerName || 'ไม่ระบุชื่อ';
+      (o.items || []).forEach(it => {
+        allItems.push({
+          name: it.name || 'สินค้าไม่ระบุชื่อ',
+          currency: it.currency || 'USD',
+          amount: it.amount || 0,
+          quantity: it.quantity || 1,
+          orderId,
+          customerName: custName,
+        });
+      });
+    });
+
+    if (allItems.length === 0) {
+      throw new Error('ไม่มีรายการสินค้าในระบบที่จะนำมาจัดกลุ่ม');
+    }
+
+    const itemsSummary = JSON.stringify(allItems);
+
+    const prompt = `คุณเป็นผู้ช่วยไกด์และจัดระบบการช้อปปิ้งของ Reseller/แม่ค้าหิ้วสินค้าต่างประเทศมืออาชีพ
+นี่คือรายการสินค้าทั้งหมดที่ลูกค้าฝากซื้อจากออเดอร์ต่างๆ:
+${itemsSummary}
+
+หน้าที่ของคุณ:
+1. วิเคราะห์สินค้าแต่ละชิ้นว่าควรไปซื้อที่ไหน (เช่น Nike Store / ABC Mart / Don Quijote / Pop Mart / ร้านสะดวกซื้อ / ห้างสรรพสินค้า / ร้านยา Matsumoto / ร้านอนิเมะ Animate ฯลฯ)
+2. รวมจำนวนชิ้นของสินค้าที่เหมือนกันหรือประเภทเดียวกันในร้านนั้น (เช่น สินค้าเดียวกันจากคนละลูกค้า ให้รวมจำนวนชิ้นพร้อมระบุว่าของลูกค้าคนไหนบ้าง)
+3. ให้คำแนะนำสั้นๆ เกี่ยวกับสถานที่หรือทริคในการซื้อสินค้าร้านนั้นเพื่อประหยัดเวลา
+
+ตอบในรูปแบบ JSON เป็น Array ของหมวดร้านค้าเท่านั้น (ไม่มี markdown fences อื่น):
+[
+  {
+    "storeName": "ชื่อร้านหรือสถานที่ (เช่น Don Quijote / ABC-Mart / ร้านยา)",
+    "category": "หมวดสินค้า เช่น รองเท้า/สกินแคร์/ฟิกเกอร์",
+    "locationTip": "ทริคหรือพิกัดแนะนำ เช่น แนะนำสาขาใหญ่ชิบุย่าเพื่อของครบ",
+    "items": [
+      {
+        "name": "ชื่อสินค้า",
+        "totalQty": 2,
+        "customerBreakdown": "คุณปิยะ (1), คุณสมชาย (1)"
+      }
+    ]
+  }
+]`;
+
+    const raw = await callGemini(prompt);
+    const match = raw.match(/\[[\s\S]*\]/);
+    if (!match) throw new Error('AI ส่งผลลัพธ์รูปแบบไม่ถูกต้อง');
+    return JSON.parse(match[0]);
+  }
+
+  // ─── UI: แสดง AI Shopping Trip Modal/Panel ─────────────────────────────────
+  async function showShoppingTripPlan() {
+    const btn = document.getElementById('btn-ai-trip');
+    const panel = document.getElementById('ai-trip-panel');
+    if (!panel) return;
+
+    if (!isConfigured()) {
+      notify('กรุณาตั้งค่า GEMINI_API_KEY ใน config.js เพื่อใช้ฟีเจอร์ AI', 'warning');
+      return;
+    }
+
+    if (btn) { btn.disabled = true; btn.textContent = '🤖 กำลังจัดกลุ่มทริป...'; }
+    panel.style.display = 'block';
+    panel.innerHTML = '<div style="text-align:center;padding:20px;color:#1976d2">🛍️ AI กำลังวิเคราะห์และจัดกลุ่มร้านค้าจากทุกออเดอร์...</div>';
+
+    try {
+      let orders = [];
+      if (typeof StorageService !== 'undefined' && StorageService.getOrders) {
+        orders = await StorageService.getOrders();
+      } else if (typeof Storage !== 'undefined' && Storage.getOrders) {
+        orders = await Storage.getOrders();
+      } else {
+        const raw = localStorage.getItem('bahtbridge_orders_data');
+        orders = raw ? JSON.parse(raw) : [];
+      }
+
+      const stores = await groupShoppingTrip(orders);
+      let html = `
+        <div style="background:#fff;border:1px solid #c8e6f8;border-radius:14px;padding:16px;box-shadow:0 6px 16px rgba(13,110,253,.08)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;border-bottom:1px solid #edf2f7;padding-bottom:8px">
+            <b style="font-size:15px;color:#102d5c">🛍️ รายการช้อปรอบทริปแยกตามร้าน</b>
+            <span style="font-size:12px;background:#e8f4fd;color:#0d6efd;padding:3px 8px;border-radius:12px;font-weight:600">${stores.length} พิกัด</span>
+          </div>`;
+
+      stores.forEach(store => {
+        html += `
+          <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:12px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="font-weight:700;font-size:14px;color:#1e293b">🏬 ${store.storeName}</span>
+              <span style="font-size:11px;background:#e2e8f0;color:#475569;padding:2px 6px;border-radius:6px">${store.category || 'ทั่วไป'}</span>
+            </div>
+            ${store.locationTip ? `<div style="font-size:11px;color:#059669;margin-top:2px">💡 ${store.locationTip}</div>` : ''}
+            <div style="margin-top:8px;border-top:1px dashed #cbd5e1;padding-top:6px">`;
+
+        (store.items || []).forEach(it => {
+          html += `
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-top:4px;font-size:12px">
+              <div>
+                <span style="font-weight:600;color:#334155">• ${it.name}</span>
+                <div style="font-size:11px;color:#64748b;margin-left:8px">ลูกค้า: ${it.customerBreakdown || '-'}</div>
+              </div>
+              <span style="font-weight:700;color:#0d6efd;white-space:nowrap;margin-left:8px">× ${it.totalQty}</span>
+            </div>`;
+        });
+
+        html += `</div></div>`;
+      });
+
+      html += `
+        <button class="outline" style="width:100%;margin-top:4px;font-size:12px;padding:8px" onclick="document.getElementById('ai-trip-panel').style.display='none'">
+          ปิดหน้าต่างรายการช้อป
+        </button>
+      </div>`;
+
+      panel.innerHTML = html;
+    } catch (err) {
+      panel.innerHTML = `<div style="background:#fff3cd;border:1px solid #ffc107;border-radius:8px;padding:12px;font-size:13px;color:#856404">⚠️ จัดกลุ่มไม่สำเร็จ: ${err.message}</div>`;
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = '🛍️ AI จัดกลุ่มซื้อตามร้าน (รอบทริป)'; }
+    }
+  }
+
+  // ─── UI: แสดง AI Suggestion ใน Create Order Screen ─────────────────────────
   async function showPriceSuggestion() {
     const btn = document.getElementById('btn-ai-suggest');
     const panel = document.getElementById('ai-suggestion-panel');
@@ -158,7 +290,6 @@
       return;
     }
 
-    // อ่านค่าจากฟอร์ม
     const goodsEl = document.getElementById('summary-goods');
     const totalEl = document.getElementById('summary-total');
     const shippingEl = document.getElementById('order-shipping');
@@ -176,12 +307,10 @@
       return;
     }
 
-    // โหลด
     if (btn) { btn.disabled = true; btn.textContent = '🤖 กำลังวิเคราะห์...'; }
     panel.style.display = 'block';
     panel.innerHTML = '<div style="text-align:center;padding:16px;color:#5b7fa6">⏳ AI กำลังคำนวณราคาแนะนำ...</div>';
 
-    // รวบรวม items จาก mini-products-list (ถ้า window.currentItems มีอยู่)
     const items = (typeof window !== 'undefined' && window.currentItems) ? window.currentItems : [];
 
     try {
@@ -210,10 +339,7 @@
     }
   }
 
-  /**
-   * แสดงผลวิเคราะห์ธุรกิจในหน้า Dashboard
-   * เรียกจาก onclick ของปุ่ม #btn-ai-analyze
-   */
+  // ─── UI: แสดงผลวิเคราะห์ธุรกิจใน Dashboard ──────────────────────────────────
   async function showOrderAnalysis() {
     const btn = document.getElementById('btn-ai-analyze');
     const panel = document.getElementById('ai-analysis-panel');
@@ -230,8 +356,10 @@
 
     try {
       let orders = [];
-      if (typeof Storage !== 'undefined' && Storage.loadOrders) {
-        orders = await Storage.loadOrders();
+      if (typeof StorageService !== 'undefined' && StorageService.getOrders) {
+        orders = await StorageService.getOrders();
+      } else if (typeof Storage !== 'undefined' && Storage.getOrders) {
+        orders = await Storage.getOrders();
       } else {
         const raw = localStorage.getItem('bahtbridge_orders_data');
         orders = raw ? JSON.parse(raw) : [];
@@ -257,6 +385,9 @@
 
     const analyzeBtn = document.getElementById('btn-ai-analyze');
     if (analyzeBtn) analyzeBtn.onclick = showOrderAnalysis;
+
+    const tripBtn = document.getElementById('btn-ai-trip');
+    if (tripBtn) tripBtn.onclick = showShoppingTripPlan;
   }
 
   return {
@@ -264,9 +395,10 @@
     isConfigured,
     suggestSellingPrice,
     analyzeOrders,
+    groupShoppingTrip,
     showPriceSuggestion,
     showOrderAnalysis,
-    _callGemini: callGemini, // exposed for testing
+    showShoppingTripPlan,
+    _callGemini: callGemini,
   };
 });
-

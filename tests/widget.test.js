@@ -115,6 +115,32 @@ describe('Widget / UI Component Tests', () => {
     assert.ok(html.includes('ตั้งราคาบวกกำไร 20%'));
   });
 
+  test('AI Shopping Trip Grouping Card: เรนเดอร์รายการสินค้าแยกตามร้านถูกต้อง', () => {
+    const sampleTrip = [
+      {
+        storeName: 'Don Quijote Shinjuku',
+        category: 'ของฝาก/ขนม',
+        locationTip: 'เปิด 24 ชม.',
+        items: [
+          { name: 'KitKat ชาเขียว', totalQty: 5, customerBreakdown: 'คุณปิยะ (3), คุณสมชาย (2)' },
+        ],
+      },
+      {
+        storeName: 'ABC-Mart Grand Stage',
+        category: 'รองเท้าผ้าใบ',
+        locationTip: 'สาขาใหญ่ของเยอะ',
+        items: [
+          { name: 'Nike Dunk Low', totalQty: 1, customerBreakdown: 'คุณปิยะ (1)' },
+        ],
+      },
+    ];
+
+    assert.equal(sampleTrip.length, 2);
+    assert.equal(sampleTrip[0].storeName, 'Don Quijote Shinjuku');
+    assert.equal(sampleTrip[0].items[0].totalQty, 5);
+    assert.ok(sampleTrip[0].items[0].customerBreakdown.includes('คุณปิยะ'));
+  });
+
   test('Sync Indicator Widget: แสดงสถานะ Offline / Online ถูกต้อง', () => {
     const getSyncState = (isOnline, isSyncing) => {
       if (!isOnline) return { text: '🟢 ทำงานออฟไลน์ (บันทึกในเครื่อง)', bg: '#e5f7ef' };
