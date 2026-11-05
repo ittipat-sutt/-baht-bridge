@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>BahtBridge — Mobile App</title>
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" type="image/svg+xml" href="/icon.svg" />
@@ -15,52 +15,540 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css" />
-  <!--
-    :root{--navy:#102d5c;--blue:#2389ec;--sky:#eaf5ff;--ink:#15233a;--muted:#708097;--line:#e7edf4;--green:#16a36a;--red:#df4c53;--bg:#f3f6fa;--card:#fff}*{box-sizing:border-box}body{margin:0;background:#dfe7f2;font-family:'DM Sans','Noto Sans Thai',sans-serif;color:var(--ink)}
-    .shell{min-height:100vh;display:grid;place-items:center;padding:28px}.phone{width:390px;min-height:844px;background:var(--bg);border-radius:34px;overflow:hidden;position:relative;box-shadow:0 26px 60px #1d355530}.screen{display:none;min-height:844px;padding:22px 20px 92px}.screen.active{display:block}.top{display:flex;align-items:center;justify-content:space-between;margin:7px 0 23px}.brand{font-size:23px;font-weight:700;color:var(--navy);letter-spacing:-.7px}.brand i{display:inline-grid;place-items:center;width:27px;height:27px;margin-right:5px;border-radius:9px;background:var(--blue);color:white;font-style:normal;font-size:16px}.avatar{width:37px;height:37px;border-radius:50%;background:#d5eaff;color:var(--navy);display:grid;place-items:center;font-weight:700}.eyebrow,.muted{color:var(--muted);font-size:13px}.hello{font-size:25px;font-weight:700;margin:3px 0 21px;letter-spacing:-.5px}.section-title{font-size:17px;font-weight:700;margin:24px 0 12px;display:flex;justify-content:space-between;align-items:center}.link{color:var(--blue);font-size:13px;font-weight:600}.stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}.stat{background:white;border-radius:17px;padding:15px;border:1px solid #edf1f5}.stat.wide{grid-column:span 2;background:linear-gradient(120deg,#102d5c,#1b4d91);color:white}.stat b{display:block;font-size:23px;margin-top:6px}.stat.wide .muted{color:#c9dbf8}.stat .dot{width:9px;height:9px;border-radius:50%;display:inline-block;background:#ffc452;margin-right:4px}.order{background:var(--card);padding:15px;border-radius:17px;border:1px solid var(--line);margin-bottom:10px}.order-head,.row{display:flex;justify-content:space-between;align-items:center}.order strong{font-size:15px}.tag{font-size:11px;font-weight:600;padding:5px 9px;border-radius:20px;background:#fff5dd;color:#a36c00}.tag.green{background:#e5f7ef;color:#098855}.order-meta{font-size:12px;color:var(--muted);margin-top:7px}.money{font-weight:700;color:var(--navy)}.primary,.secondary,.outline{border:0;border-radius:14px;padding:15px 16px;width:100%;font:600 15px inherit;cursor:pointer}.primary{background:var(--blue);color:white;box-shadow:0 8px 17px #2389ec38}.secondary{background:#e5f3ff;color:var(--blue)}.outline{background:#fff;border:1px solid #c9dcf0;color:var(--navy)}.float-add{position:absolute;bottom:82px;right:20px;width:auto;border-radius:50px;padding:14px 17px}.bottom{position:absolute;bottom:0;left:0;width:100%;height:68px;background:#fff;border-top:1px solid var(--line);display:flex;justify-content:space-around;padding-top:11px}.nav{font-size:11px;color:#93a0b0;text-align:center;cursor:pointer}.nav span{font-size:19px;display:block;height:26px}.nav.on{color:var(--blue);font-weight:600}.back{font-size:24px;color:var(--navy);cursor:pointer}.page-title{font-size:22px;font-weight:700;margin:0 0 4px}.sub{font-size:13px;color:var(--muted);margin-bottom:19px}.form-card,.summary{background:#fff;border-radius:18px;padding:16px;border:1px solid var(--line)}.field{margin-bottom:13px}.field label{display:block;font-size:12px;font-weight:600;color:#516177;margin:0 0 6px}.input{height:43px;border:1px solid #dfe7ef;border-radius:11px;background:#fbfcfe;padding:11px;font:14px inherit;color:#35455a;width:100%}.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}.mini-product{background:#f8fbff;border:1px solid #dcebf9;border-radius:14px;padding:12px;margin-top:12px}.product-title{font-size:14px;font-weight:600}.convert{margin-top:6px;font-size:13px;color:var(--muted)}.convert b{color:var(--blue);margin-left:8px}.api{margin:13px 0;padding:11px 12px;border-radius:12px;background:#eaf8f1;color:#11885b;font-size:12px;display:flex;gap:8px;align-items:center}.api.loading{background:#edf7ff;color:#1977c9}.spin{width:14px;height:14px;border:2px solid #8fc8f5;border-top-color:#1977c9;border-radius:50%;animation:r 1s linear infinite}@keyframes r{to{transform:rotate(360deg)}}.summary{margin-top:14px}.summary .row{font-size:13px;padding:6px 0;color:#5e6b7b}.summary .total{border-top:1px dashed #cfd9e5;margin-top:6px;padding-top:12px;color:var(--navy);font-size:16px;font-weight:700}.sticky{position:absolute;bottom:83px;left:20px;right:20px}.detail-head{background:linear-gradient(135deg,#112f60,#215ea9);padding:19px;border-radius:18px;color:white}.detail-head .sub{color:#c5dbfa;margin:5px 0 0}.detail-head b{font-size:19px}.item{display:flex;gap:12px;background:#fff;padding:13px;border-radius:15px;border:1px solid var(--line);margin-top:10px}.flag,.photo{width:42px;height:42px;border-radius:12px;background:#eef6ff;display:grid;place-items:center;font-size:21px;flex:none}.photo{font-size:18px}.item-info{flex:1}.item-info strong{font-size:14px}.item-info small{display:block;color:var(--muted);margin-top:3px;font-size:12px}.price{text-align:right;font-size:13px}.price small{display:block;color:var(--green);margin-top:4px}.customer-hero{background:linear-gradient(145deg,#0e2c5b,#286abb);padding:20px;border-radius:20px;color:white;margin-bottom:16px}.customer-hero .sub{color:#c5dcfa}.due{font-size:34px;font-weight:700;letter-spacing:-1px;margin-top:7px}.status-line{display:inline-block;background:#e5f7ef;color:#11885b;padding:6px 10px;border-radius:30px;font-size:12px;font-weight:600;margin:12px 0}.center-state{min-height:700px;display:grid;place-content:center;text-align:center;padding:30px}.state-icon{font-size:46px;width:84px;height:84px;display:grid;place-items:center;background:#e9f5ff;border-radius:28px;margin:auto}.center-state h2{font-size:20px;margin:18px 0 7px}.center-state p{font-size:13px;color:var(--muted);line-height:1.6;margin:0 0 18px}.dots{display:flex;gap:6px;justify-content:center;margin-top:13px}.dots i{width:7px;height:7px;border-radius:50%;background:#79b9ee;animation:p 1s infinite alternate}.dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}@keyframes p{to{opacity:.25;transform:translateY(-5px)}}.error .state-icon{background:#fff0f1}.error h2{color:#be3940}
-  -->
 </head>
-<body><main class="shell"><div class="phone">
-  <section class="screen active" id="dashboard"><div class="screen-body"><div class="top"><div class="brand"><i>฿</i>BahtBridge</div><div class="avatar">M</div></div><div class="eyebrow">ภาพรวมธุรกิจของคุณ</div><div class="hello">สวัสดี, Merchant 👋</div><div class="stats"><div class="stat"><span class="muted">ออเดอร์ทั้งหมด</span><b id="stat-total-orders">2</b></div><div class="stat"><span class="muted"><i class="dot"></i>รอดำเนินการ</span><b id="stat-pending-orders">1</b></div><div class="stat wide"><span class="muted">ยอดขายรวมเดือนนี้</span><b id="stat-total-sales">฿ 5,940</b></div></div><div class="section-title">ออเดอร์ล่าสุด <span class="link" onclick="show('orders')">ดูทั้งหมด</span></div><div id="dashboard-recent-orders"></div><button class="primary float-add" onclick="show('create')">＋ สร้างออเดอร์</button></div><nav class="bottom"><div class="nav on"><span>⌂</span>Dashboard</div><div class="nav" onclick="show('orders')"><span>▤</span>Orders</div><div class="nav" onclick="show('profile')"><span>♙</span>Profile</div></nav></section>
-  <section class="screen" id="create"><div class="screen-body"><div class="top"><span class="back" onclick="show('dashboard')">‹</span><div class="brand">BahtBridge</div><span></span></div><h1 class="page-title">สร้างออเดอร์ใหม่</h1><p class="sub">บันทึกข้อมูลลูกค้าและคำนวณอัตราแลกเปลี่ยน</p><div class="form-card"><div class="field"><label>ชื่อลูกค้า <span style="color:#df4c53">*</span></label><input class="input" id="cust-name" placeholder="ชื่อ-นามสกุล ลูกค้า" /></div><div class="two"><div class="field"><label>เบอร์โทรศัพท์</label><input class="input" id="cust-phone" placeholder="เช่น 081-234-5678" /></div><div class="field"><label>ช่องทางติดต่อ/ที่อยู่</label><input class="input" id="cust-address" placeholder="LINE / IG / ที่อยู่จัดส่ง" /></div></div><hr style="border:0;border-top:1px dashed #e2eaf3;margin:12px 0 16px"><div class="field"><label>ชื่อสินค้า</label><input class="input" id="product-name" placeholder="เช่น รองเท้า Nike, ฟิกเกอร์" /></div>    <div class="two">
-      <div class="field">
-        <label>ประเทศต้นทาง</label>
-        <select class="input" id="country-select">
-          <option value="USD">🇺🇸 สหรัฐอเมริกา</option>
-          <option value="JPY">🇯🇵 ญี่ปุ่น</option>
-          <option value="KRW">🇰🇷 เกาหลีใต้</option>
-          <option value="CNY">🇨🇳 จีน</option>
-          <option value="EUR">🇪🇺 ยุโรป</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>สกุลเงิน</label>
-        <select class="input" id="currency-select">
-          <option value="USD">USD</option>
-          <option value="JPY">JPY</option>
-          <option value="KRW">KRW</option>
-          <option value="CNY">CNY</option>
-          <option value="EUR">EUR</option>
-        </select>
-      </div>
-    </div><div class="two"><div class="field"><label>ราคาสินค้า</label><input class="input" id="product-price" type="number" placeholder="50" /></div><div class="field"><label>จำนวน</label><input class="input" id="product-qty" type="number" value="1" min="1" /></div></div><button class="secondary" id="btn-add-product">＋ เพิ่มสินค้า</button><div id="mini-products-list"></div></div><div class="api" id="api-ok">● อัตราแลกเปลี่ยนอัปเดตล่าสุด: วันนี้ 14:30</div><div class="summary"><div class="row"><span>ราคาสินค้ารวม</span><b id="summary-goods">฿ 0</b></div><div class="row"><span>ค่าจัดส่ง</span><input type="number" id="order-shipping" class="input" style="width:90px;height:32px;padding:4px 8px;text-align:right" placeholder="150" value="150" min="0" oninput="renderCreateSummary()" /></div><div class="row"><span>ค่าบริการ / ค่าหิ้ว</span><input type="number" id="order-fee" class="input" style="width:90px;height:32px;padding:4px 8px;text-align:right" placeholder="100" value="100" min="0" oninput="renderCreateSummary()" /></div><div class="row total"><span>ยอดรวม</span><b id="summary-total">฿ 0</b></div></div><div class="sticky"><button class="primary" onclick="calculateOrder()">คำนวณราคา & บันทึกออเดอร์</button></div></div></section>
-  <section class="screen" id="loading"><div class="screen-body"><div class="center-state"><div class="state-icon"><span class="spin" style="width:32px;height:32px;border-width:4px"></span></div><h2>กำลังดึงอัตราแลกเปลี่ยน...</h2><p>ระบบกำลังแปลงราคาสินค้าทุกสกุลเงิน<br>เป็นเงินบาท (THB)</p><div class="dots"><i></i><i></i><i></i></div></div></div></section>
-  <section class="screen" id="detail"><div class="screen-body"><div class="top"><span class="back" onclick="show('create')">‹</span><div class="brand">BahtBridge</div><span></span></div><h1 class="page-title" id="detail-order-title">รายละเอียดออเดอร์</h1><div class="detail-head"><span class="sub">ข้อมูลลูกค้า</span><b id="detail-customer-name">คุณปิยะ วัฒนะ</b><div class="sub" id="detail-customer-contact" style="margin-top:2px;font-size:13px;color:#c9e3ff">081-234-5678 · LINE: @piya</div><div class="sub" id="detail-order-meta" style="margin-top:4px">24 ก.ย. 2569 · <span style="color:#7ee3b6">● พร้อมยืนยัน</span></div></div><div class="api" id="detail-api-badge">✓ อัปเดตอัตราแลกเปลี่ยนสำเร็จ</div><div class="api" id="detail-fallback-warning" style="display:none;background:#fff3cd;color:#856404;border:1px solid #ffeeba;margin-top:10px">⚠️ ใช้อัตราแลกเปลี่ยนสำรอง (ออฟไลน์) กรุณาตรวจสอบราคาก่อนยืนยัน</div><div class="section-title">รายการสินค้า</div><div id="detail-items-list"></div><div class="summary"><div class="row"><span>ราคาสินค้ารวม</span><b id="detail-summary-goods">฿ 0</b></div><div class="row"><span>ค่าจัดส่ง</span><b id="detail-summary-shipping">฿ 0</b></div><div class="row"><span>ค่าบริการ</span><b id="detail-summary-fee">฿ 0</b></div><div class="row total"><span>ยอดรวม</span><b id="detail-summary-total">฿ 0</b></div></div><div class="sticky"><button class="primary" id="btn-confirm-order" onclick="confirmCurrentOrder()">ยืนยันออเดอร์</button><button class="outline" style="margin-top:8px" onclick="shareOrderSummary()">↗ แชร์ยอดให้ลูกค้า</button></div></div></section>
-  <section class="screen" id="customer"><div class="screen-body"><div class="top"><span class="back" onclick="show('detail')">‹</span><div class="brand"><i>฿</i>BahtBridge</div><span class="eyebrow">สำหรับลูกค้า</span></div><h1 class="page-title">รายละเอียดการสั่งซื้อ</h1><div class="customer-hero"><div class="sub" id="cust-view-order-id">Order #BR001</div><b id="cust-view-name">คุณปิยะ วัฒนะ</b><div class="sub" id="cust-view-contact" style="margin-top:4px;font-size:13px">081-234-5678</div><br><span class="status-line" id="cust-view-status">● กำลังดำเนินการ</span><div class="sub">ยอดที่ต้องชำระ</div><div class="due" id="cust-view-due">฿ 0</div></div><div class="section-title">รายการสินค้า <span class="muted" id="cust-view-count">0 รายการ</span></div><div id="customer-items-list"></div><div class="summary"><div class="row"><span>ค่าสินค้า</span><b id="cust-summary-goods">฿ 0</b></div><div class="row"><span>ค่าจัดส่ง</span><b id="cust-summary-shipping">฿ 0</b></div><div class="row"><span>ค่าบริการ</span><b id="cust-summary-fee">฿ 0</b></div><div class="row total"><span>ยอดที่ต้องชำระ</span><b id="cust-summary-total">฿ 0</b></div></div><div class="sticky"><button class="primary" onclick="confirmCurrentOrder()">ยืนยันรายการ</button><button class="outline" style="margin-top:8px" onclick="show('detail')">ดูรายละเอียด</button></div></div></section>
-  <section class="screen" id="orders"><div class="screen-body"><div class="top"><span class="back" onclick="show('dashboard')">‹</span><div class="brand">ออเดอร์ทั้งหมด</div><span></span></div><p class="sub">จัดการออเดอร์และส่งยอดให้ลูกค้า</p><div style="position:relative;margin-bottom:14px"><input class="input" id="order-search" placeholder="🔍  ค้นหาชื่อลูกค้า หรือเลขออเดอร์..." oninput="filterOrders(this.value)" style="padding-left:14px" /><div id="orders-list"><div id="empty-orders" style="display:none;text-align:center;padding:40px 20px;color:var(--muted)"><div style="font-size:36px;margin-bottom:10px">📭</div><div style="font-weight:600">ไม่พบออเดอร์</div><div style="font-size:13px;margin-top:4px">ลองค้นหาด้วยคำอื่น</div></div></div></div></div><nav class="bottom"><div class="nav" onclick="show('dashboard')"><span>⌂</span>Dashboard</div><div class="nav on"><span>▤</span>Orders</div><div class="nav" onclick="show('profile')"><span>♙</span>Profile</div></nav></section>
+<body>
+  <div id="toast-root"></div>
+  <main class="shell">
+    <div class="phone">
 
-  <section class="screen" id="profile"><div class="screen-body"><div class="top"><div class="brand"><i>฿</i>BahtBridge</div><span></span></div><div style="text-align:center;padding:16px 0 24px"><div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#102d5c,#2389ec);color:white;display:grid;place-items:center;font-size:28px;font-weight:700;margin:0 auto 12px">M</div><div style="font-size:18px;font-weight:700;color:var(--navy)">Merchant Shop</div><div class="muted" style="margin-top:4px">สมาชิกตั้งแต่ ก.ย. 2569</div></div><div class="form-card" style="margin-bottom:14px"><div class="section-title" style="margin-top:0">ข้อมูลร้านค้า</div><div class="field"><label>ชื่อร้าน</label><div class="input" style="height:auto;padding:11px;line-height:1.4">Merchant Shop</div></div><div class="field"><label>อีเมล</label><div class="input" style="height:auto;padding:11px">merchant@example.com</div></div><div class="field"><label>เบอร์โทร</label><div class="input" style="height:auto;padding:11px">081-234-5678</div></div></div><div class="form-card" style="margin-bottom:14px"><div class="section-title" style="margin-top:0">สถิติร้านค้า</div><div class="stats"><div class="stat"><span class="muted">ออเดอร์ทั้งหมด</span><b id="profile-total-orders">0</b></div><div class="stat"><span class="muted">ยืนยันแล้ว</span><b id="profile-confirmed-orders">0</b></div><div class="stat wide"><span class="muted">ยอดขายสะสม</span><b id="profile-total-sales">฿ 0</b></div></div></div><div class="form-card" style="margin-bottom:14px"><div class="section-title" style="margin-top:0">สำรอง & นำเข้าข้อมูล (Backup / Restore)</div><p class="sub" style="margin-bottom:12px;font-size:12px">ป้องกันข้อมูลออเดอร์สูญหายเมื่อล้างแคชเบราว์เซอร์</p><div class="two"><button class="outline" onclick="exportOrdersData()" style="padding:10px;font-size:13px">📤 สำรองข้อมูล</button><button class="outline" onclick="document.getElementById('backup-file-input').click()" style="padding:10px;font-size:13px">📥 นำเข้าข้อมูล</button></div><input type="file" id="backup-file-input" accept=".json" style="display:none" onchange="importOrdersData(event)" /></div>
-<div class="form-card" style="margin-bottom:14px" id="auth-card"><div class="section-title" style="margin-top:0">บัญชีผู้ใช้ & คลาวด์ซิงค์</div><div id="sync-indicator" style="font-size:12px;font-weight:600;margin-bottom:12px;padding:6px 10px;border-radius:20px;text-align:center;background:#e5f7ef;color:#11885b">🟢 ทำงานออฟไลน์ (บันทึกในเครื่อง)</div><div class="field"><label>อีเมลสำหรับเข้าสู่ระบบ</label><input class="input" id="login-email-input" type="email" placeholder="merchant@example.com" /></div><div class="two" style="margin-bottom:8px"><button class="primary" id="btn-login-email" style="padding:10px;font-size:13px">✉️ เข้าสู่ระบบ Magic Link</button><button class="outline" id="btn-login-google" style="padding:10px;font-size:13px">🌐 เข้าสู่ระบบ Google</button></div></div>
-<a href="/BahtBridge.apk" download="BahtBridge.apk" class="primary" style="display:block;text-align:center;text-decoration:none;margin-bottom:12px;background:#16a36a;box-shadow:0 8px 17px #16a36a38">📥 ดาวน์โหลดแอป Android (.apk)</a>
-<button class="outline" id="btn-logout" style="color:var(--red,#df4c53);border-color:#f5c0c2;margin-bottom:8px">🚪 ออกจากระบบ</button>
-<button class="outline" id="btn-delete-account" style="color:#999;border-color:#eee;margin-bottom:10px;font-size:12px">⚠️ ลบบัญชีและข้อมูลทั้งหมด</button></div><nav class="bottom"><div class="nav" onclick="show('dashboard')"><span>⌂</span>Dashboard</div><div class="nav" onclick="show('orders')"><span>▤</span>Orders</div><div class="nav on"><span>♙</span>Profile</div></nav></section>
+      <!-- ========================================== -->
+      <!-- 1. DASHBOARD SCREEN                       -->
+      <!-- ========================================== -->
+      <section class="screen active" id="dashboard">
+        <div class="screen-body">
+          <div class="top">
+            <div class="brand"><i>฿</i>BahtBridge</div>
+            <div class="avatar">M</div>
+          </div>
+          <div class="eyebrow">ภาพรวมธุรกิจของคุณ</div>
+          <div class="hello">สวัสดี, Merchant 👋</div>
+          <div class="stats">
+            <div class="stat"><span class="muted">ออเดอร์ทั้งหมด</span><b id="stat-total-orders">0</b></div>
+            <div class="stat"><span class="muted"><i class="dot"></i>รอดำเนินการ</span><b id="stat-pending-orders">0</b></div>
+            <div class="stat wide"><span class="muted">ยอดขายรวมเดือนนี้</span><b id="stat-total-sales">฿ 0</b></div>
+          </div>
+          <div class="section-title">ออเดอร์ล่าสุด <span class="link" onclick="show('orders')">ดูทั้งหมด</span></div>
+          <div id="dashboard-recent-orders"></div>
+          <button class="primary float-add" onclick="show('create')">＋ สร้างออเดอร์</button>
+        </div>
+        <nav class="bottom">
+          <div class="nav on" onclick="show('dashboard')"><span>⌂</span>Dashboard</div>
+          <div class="nav" onclick="show('orders')"><span>▤</span>Orders</div>
+          <div class="nav" onclick="show('profile')"><span>♙</span>Profile</div>
+        </nav>
+      </section>
 
-  <section class="screen" id="success"><div class="screen-body"><div class="center-state"><div class="state-icon" style="background:#e5f7ef;font-size:40px">✓</div><h2 style="color:var(--green,#16a36a)">บันทึกออเดอร์สำเร็จ!</h2><p>บันทึกข้อมูลลูกค้าและออเดอร์เรียบร้อยแล้ว<br>สามารถดูย้อนหลังในหน้ารายการออเดอร์ได้ทันที</p><div style="background:#fff;border-radius:16px;border:1px solid var(--line);padding:16px;margin-bottom:20px;text-align:left"><div class="row" style="margin-bottom:8px"><span class="muted">เลขออเดอร์</span><strong id="success-order-id">#BR001</strong></div><div class="row" style="margin-bottom:8px"><span class="muted">ลูกค้า</span><strong id="success-customer-name">คุณปิยะ วัฒนะ</strong></div><div class="row" style="margin-bottom:8px"><span class="muted">เบอร์โทร</span><strong id="success-customer-phone">081-234-5678</strong></div><div class="row"><span class="muted">ยอดรวม</span><strong id="success-order-total" style="color:var(--navy)">฿ 3,750</strong></div></div><button class="primary" style="margin-bottom:10px" onclick="show('dashboard')">กลับหน้าหลัก (Dashboard)</button><button class="outline" onclick="show('orders')">ดูรายการออเดอร์ทั้งหมด</button></div></div></section>
-</div></main><script src="vendor/supabase.js"></script><script src="config.js"></script><script src="pricing.js"></script><script src="storage.js"></script><script src="supabase-storage.js"></script><script src="auth.js"></script><script src="app.js"></script><script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(console.error);
-    });
-  }
-</script>
-</body></html>
+      <!-- ========================================== -->
+      <!-- 2. CREATE ORDER SCREEN                    -->
+      <!-- ========================================== -->
+      <section class="screen" id="create">
+        <div class="screen-body">
+          <div class="top">
+            <span class="back" onclick="show('dashboard')">‹</span>
+            <div class="brand">BahtBridge</div>
+            <span></span>
+          </div>
+          <h1 class="page-title">สร้างออเดอร์ใหม่</h1>
+          <p class="sub">บันทึกข้อมูลลูกค้าและคำนวณอัตราแลกเปลี่ยน</p>
+
+          <div class="form-card">
+            <div class="field">
+              <label>ชื่อลูกค้า <span style="color:#df4c53">*</span></label>
+              <input class="input" id="cust-name" placeholder="ชื่อ-นามสกุล ลูกค้า" />
+            </div>
+            <div class="two">
+              <div class="field">
+                <label>เบอร์โทรศัพท์</label>
+                <input class="input" id="cust-phone" placeholder="เช่น 081-234-5678" />
+              </div>
+              <div class="field">
+                <label>ช่องทางติดต่อ/ที่อยู่</label>
+                <input class="input" id="cust-address" placeholder="LINE / IG / ที่อยู่จัดส่ง" />
+              </div>
+            </div>
+
+            <hr style="border:0;border-top:1px dashed #e2eaf3;margin:12px 0 16px">
+
+            <div class="field">
+              <label>ชื่อสินค้า</label>
+              <input class="input" id="product-name" placeholder="เช่น รองเท้า Nike, ฟิกเกอร์" />
+            </div>
+            <div class="two">
+              <div class="field">
+                <label>ประเทศต้นทาง</label>
+                <select class="input" id="country-select">
+                  <option value="USD">🇺🇸 สหรัฐอเมริกา</option>
+                  <option value="JPY">🇯🇵 ญี่ปุ่น</option>
+                  <option value="KRW">🇰🇷 เกาหลีใต้</option>
+                  <option value="CNY">🇨🇳 จีน</option>
+                  <option value="EUR">🇪🇺 ยุโรป</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>สกุลเงิน</label>
+                <select class="input" id="currency-select">
+                  <option value="USD">USD</option>
+                  <option value="JPY">JPY</option>
+                  <option value="KRW">KRW</option>
+                  <option value="CNY">CNY</option>
+                  <option value="EUR">EUR</option>
+                </select>
+              </div>
+            </div>
+            <div class="two">
+              <div class="field">
+                <label>ราคาสินค้า</label>
+                <input class="input" id="product-price" type="number" placeholder="50" />
+              </div>
+              <div class="field">
+                <label>จำนวน</label>
+                <input class="input" id="product-qty" type="number" value="1" min="1" />
+              </div>
+            </div>
+            <button class="secondary" id="btn-add-product">＋ เพิ่มสินค้า</button>
+            <div id="mini-products-list"></div>
+          </div>
+
+          <div class="api" id="api-ok">● อัตราแลกเปลี่ยนอัปเดตล่าสุด: วันนี้ 14:30</div>
+
+          <div class="summary">
+            <div class="row">
+              <span>ราคาสินค้ารวม</span>
+              <b id="summary-goods">฿ 0</b>
+            </div>
+            <div class="row">
+              <span>ค่าจัดส่ง</span>
+              <input type="number" id="order-shipping" class="input" style="width:90px;height:32px;padding:4px 8px;text-align:right" placeholder="150" value="150" min="0" oninput="renderCreateSummary()" />
+            </div>
+            <div class="row">
+              <span>ค่าบริการ / ค่าหิ้ว</span>
+              <input type="number" id="order-fee" class="input" style="width:90px;height:32px;padding:4px 8px;text-align:right" placeholder="100" value="100" min="0" oninput="renderCreateSummary()" />
+            </div>
+            <div class="row total">
+              <span>ยอดรวม</span>
+              <b id="summary-total">฿ 0</b>
+            </div>
+          </div>
+
+          <div class="sticky">
+            <button class="primary" onclick="calculateOrder()">คำนวณราคา & บันทึกออเดอร์</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 3. LOADING SCREEN                         -->
+      <!-- ========================================== -->
+      <section class="screen" id="loading">
+        <div class="screen-body">
+          <div class="center-state">
+            <div class="state-icon"><span class="spin" style="width:32px;height:32px;border-width:4px"></span></div>
+            <h2>กำลังดึงอัตราแลกเปลี่ยน...</h2>
+            <p>ระบบกำลังแปลงราคาสินค้าทุกสกุลเงิน<br>เป็นเงินบาท (THB)</p>
+            <div class="dots"><i></i><i></i><i></i></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 4. DETAIL SCREEN (ORDER DETAIL)           -->
+      <!-- ========================================== -->
+      <section class="screen" id="detail">
+        <div class="screen-body">
+          <div class="top">
+            <span class="back" onclick="show('create')">‹</span>
+            <div class="brand">BahtBridge</div>
+            <span></span>
+          </div>
+          <h1 class="page-title" id="detail-order-title">รายละเอียดออเดอร์</h1>
+
+          <!-- Head & Customer Info -->
+          <div class="detail-head">
+            <span class="sub">ข้อมูลลูกค้า</span>
+            <b id="detail-customer-name">คุณปิยะ วัฒนะ</b>
+            <div class="sub" id="detail-customer-contact" style="margin-top:2px;font-size:13px;color:#c9e3ff">081-234-5678 · LINE: @piya</div>
+            <div class="sub" id="detail-order-meta" style="margin-top:4px">24 ก.ย. 2569 · <span style="color:#7ee3b6">● พร้อมยืนยัน</span></div>
+          </div>
+
+          <!-- Status Bar & Payment Badge -->
+          <div class="form-card" style="margin-top:12px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+              <span class="muted" style="font-size:12px;font-weight:600">สถานะคำสั่งซื้อ</span>
+              <span id="payment-badge" class="tag">รอชำระเงิน</span>
+            </div>
+            <div id="status-bar" data-field="fulfillmentStatus">
+              <!-- Rendered by Status UI Component -->
+            </div>
+          </div>
+
+          <div class="api" id="detail-api-badge">✓ อัปเดตอัตราแลกเปลี่ยนสำเร็จ</div>
+          <div class="api" id="detail-fallback-warning" style="display:none;background:#fff3cd;color:#856404;border:1px solid #ffeeba;margin-top:10px">⚠️ ใช้อัตราแลกเปลี่ยนสำรอง (ออฟไลน์) กรุณาตรวจสอบราคาก่อนยืนยัน</div>
+
+          <!-- Items -->
+          <div class="section-title">รายการสินค้า</div>
+          <div id="detail-items-list"></div>
+
+          <!-- Summary -->
+          <div class="summary">
+            <div class="row"><span>ราคาสินค้ารวม</span><b id="detail-summary-goods">฿ 0</b></div>
+            <div class="row"><span>ค่าจัดส่ง</span><b id="detail-summary-shipping">฿ 0</b></div>
+            <div class="row"><span>ค่าบริการ</span><b id="detail-summary-fee">฿ 0</b></div>
+            <div class="row total"><span>ยอดรวม</span><b id="detail-summary-total">฿ 0</b></div>
+          </div>
+
+          <!-- Payment Section -->
+          <div class="form-card" id="payment-section" style="margin-top:14px">
+            <div class="section-title" style="margin-top:0">
+              <span>ประวัติการชำระเงิน</span>
+              <button class="link" id="btn-add-payment" style="background:none;border:none;cursor:pointer">+ เพิ่มยอดชำระ</button>
+            </div>
+            <div class="stats" style="margin-bottom:12px">
+              <div class="stat"><span class="muted">ยอดรวม</span><b id="pay-total">฿ 0</b></div>
+              <div class="stat"><span class="muted">ชำระแล้ว</span><b id="pay-paid" style="color:var(--green,#16a36a)">฿ 0</b></div>
+              <div class="stat wide"><span class="muted">คงเหลือ</span><b id="pay-due" style="color:var(--red,#df4c53)">฿ 0</b></div>
+            </div>
+            <div id="payments-list"></div>
+            <div id="payment-form" class="hidden" style="display:none;margin-top:12px;padding:12px;background:#f8fbff;border:1px solid #dcebf9;border-radius:12px">
+              <div class="field">
+                <label>จำนวนเงิน (บาท)</label>
+                <input type="number" id="pay-amount" class="input" placeholder="0.00" min="0" step="any" />
+              </div>
+              <div class="field">
+                <label>หมายเหตุ / ช่องทางโอน</label>
+                <input type="text" id="pay-note" class="input" placeholder="เช่น โอนผ่าน KBANK, มัดจำ 50%" />
+              </div>
+              <button class="primary" id="btn-save-payment" style="padding:10px;font-size:13px">บันทึกการชำระเงิน</button>
+            </div>
+          </div>
+
+          <!-- Shipments Section -->
+          <div class="form-card" id="shipments-section" style="margin-top:14px">
+            <div class="section-title" style="margin-top:0">
+              <span>ข้อมูลการจัดส่ง & พัสดุ</span>
+              <button class="link" id="btn-add-shipment" style="background:none;border:none;cursor:pointer">+ เพิ่มพัสดุ</button>
+            </div>
+            <div id="shipments-list"></div>
+            <div id="shipment-form" class="hidden" style="display:none;margin-top:12px;padding:12px;background:#f8fbff;border:1px solid #dcebf9;border-radius:12px">
+              <div class="field">
+                <label>ผู้ให้บริการขนส่ง (Carrier)</label>
+                <input type="text" id="ship-carrier" class="input" placeholder="เช่น Flash Express, Kerry, ไปรษณีย์ไทย" />
+              </div>
+              <div class="field">
+                <label>เลขติดตามพัสดุ (Tracking No.)</label>
+                <input type="text" id="ship-trackingno" class="input" placeholder="เช่น TH0123456789" />
+              </div>
+              <div class="field">
+                <label>วันที่จัดส่ง</label>
+                <input type="date" id="ship-date" class="input" />
+              </div>
+              <div class="field">
+                <label>หมายเหตุ</label>
+                <input type="text" id="ship-note" class="input" placeholder="เช่น ส่งรอบบ่าย" />
+              </div>
+              <button class="primary" id="btn-save-shipment" style="padding:10px;font-size:13px">บันทึกข้อมูลพัสดุ</button>
+            </div>
+          </div>
+
+          <!-- Activity / History List -->
+          <div class="form-card" style="margin-top:14px">
+            <div class="section-title" style="margin-top:0">ประวัติกิจกรรม (History Log)</div>
+            <div id="history-list"></div>
+          </div>
+
+          <!-- Actions -->
+          <div class="sticky">
+            <button class="primary" id="btn-confirm-order" onclick="confirmCurrentOrder()">ยืนยันออเดอร์</button>
+            <button class="outline" style="margin-top:8px" onclick="shareOrderSummary()">↗ แชร์ยอดให้ลูกค้า</button>
+          </div>
+        </div>
+
+        <!-- Bottom Sheet for Status Update -->
+        <div id="status-sheet" class="hidden" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,0.15);padding:20px;z-index:999">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+            <strong style="font-size:16px">เปลี่ยนสถานะออเดอร์</strong>
+            <button id="btn-close-sheet" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">✕</button>
+          </div>
+          <div id="status-options" style="display:grid;gap:8px"></div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 5. CUSTOMER VIEW SCREEN                   -->
+      <!-- ========================================== -->
+      <section class="screen" id="customer">
+        <div class="screen-body">
+          <div class="top">
+            <span class="back" onclick="show('detail')">‹</span>
+            <div class="brand"><i>฿</i>BahtBridge</div>
+            <span class="eyebrow">สำหรับลูกค้า</span>
+          </div>
+          <h1 class="page-title">รายละเอียดการสั่งซื้อ</h1>
+          <div class="customer-hero">
+            <div class="sub" id="cust-view-order-id">Order #BR001</div>
+            <b id="cust-view-name">คุณปิยะ วัฒนะ</b>
+            <div class="sub" id="cust-view-contact" style="margin-top:4px;font-size:13px">081-234-5678</div>
+            <br>
+            <span class="status-line" id="cust-view-status">● กำลังดำเนินการ</span>
+            <div class="sub">ยอดที่ต้องชำระ</div>
+            <div class="due" id="cust-view-due">฿ 0</div>
+          </div>
+          <div class="section-title">รายการสินค้า <span class="muted" id="cust-view-count">0 รายการ</span></div>
+          <div id="customer-items-list"></div>
+          <div class="summary">
+            <div class="row"><span>ค่าสินค้า</span><b id="cust-summary-goods">฿ 0</b></div>
+            <div class="row"><span>ค่าจัดส่ง</span><b id="cust-summary-shipping">฿ 0</b></div>
+            <div class="row"><span>ค่าบริการ</span><b id="cust-summary-fee">฿ 0</b></div>
+            <div class="row total"><span>ยอดที่ต้องชำระ</span><b id="cust-summary-total">฿ 0</b></div>
+          </div>
+          <div class="sticky">
+            <button class="primary" onclick="confirmCurrentOrder()">ยืนยันรายการ</button>
+            <button class="outline" style="margin-top:8px" onclick="show('detail')">ดูรายละเอียด</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 6. ORDERS LIST SCREEN                     -->
+      <!-- ========================================== -->
+      <section class="screen" id="orders">
+        <div class="screen-body">
+          <div class="top">
+            <span class="back" onclick="show('dashboard')">‹</span>
+            <div class="brand">ออเดอร์ทั้งหมด</div>
+            <span></span>
+          </div>
+          <p class="sub">จัดการออเดอร์และส่งยอดให้ลูกค้า</p>
+
+          <!-- Status Filter Chips -->
+          <div id="status-filter" class="status-filter" style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px">
+            <button class="filter-chip active" data-filter="all">ทั้งหมด</button>
+            <button class="filter-chip" data-filter="unpaid">ยังไม่ชำระ</button>
+            <button class="filter-chip" data-filter="pending">รอดำเนินการ</button>
+            <button class="filter-chip" data-filter="incoming">กำลังมา</button>
+            <button class="filter-chip" data-filter="sent">ส่งแล้ว</button>
+          </div>
+
+          <div style="position:relative;margin-bottom:14px">
+            <input class="input" id="order-search" placeholder="🔍  ค้นหาชื่อลูกค้า หรือเลขออเดอร์..." oninput="filterOrders(this.value)" style="padding-left:14px" />
+            <div id="orders-list">
+              <div id="empty-orders" style="display:none;text-align:center;padding:40px 20px;color:var(--muted)">
+                <div style="font-size:36px;margin-bottom:10px">📭</div>
+                <div style="font-weight:600">ไม่พบออเดอร์</div>
+                <div style="font-size:13px;margin-top:4px">ลองค้นหาด้วยคำอื่น</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <nav class="bottom">
+          <div class="nav" onclick="show('dashboard')"><span>⌂</span>Dashboard</div>
+          <div class="nav on" onclick="show('orders')"><span>▤</span>Orders</div>
+          <div class="nav" onclick="show('profile')"><span>♙</span>Profile</div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 7. PROFILE SCREEN                         -->
+      <!-- ========================================== -->
+      <section class="screen" id="profile">
+        <div class="screen-body">
+          <div class="top">
+            <div class="brand"><i>฿</i>BahtBridge</div>
+            <span></span>
+          </div>
+          <div style="text-align:center;padding:16px 0 24px">
+            <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,#102d5c,#2389ec);color:white;display:grid;place-items:center;font-size:28px;font-weight:700;margin:0 auto 12px">M</div>
+            <div style="font-size:18px;font-weight:700;color:var(--navy)">Merchant Shop</div>
+            <div class="muted" style="margin-top:4px">สมาชิกตั้งแต่ ก.ย. 2569</div>
+          </div>
+
+          <!-- Store Info -->
+          <div class="form-card" style="margin-bottom:14px">
+            <div class="section-title" style="margin-top:0">ข้อมูลร้านค้า</div>
+            <div class="field"><label>ชื่อร้าน</label><div class="input" style="height:auto;padding:11px;line-height:1.4">Merchant Shop</div></div>
+            <div class="field"><label>อีเมล</label><div class="input" style="height:auto;padding:11px">merchant@example.com</div></div>
+            <div class="field"><label>เบอร์โทร</label><div class="input" style="height:auto;padding:11px">081-234-5678</div></div>
+          </div>
+
+          <!-- Store Stats -->
+          <div class="form-card" style="margin-bottom:14px">
+            <div class="section-title" style="margin-top:0">สถิติร้านค้า</div>
+            <div class="stats">
+              <div class="stat"><span class="muted">ออเดอร์ทั้งหมด</span><b id="profile-total-orders">0</b></div>
+              <div class="stat"><span class="muted">ยืนยันแล้ว</span><b id="profile-confirmed-orders">0</b></div>
+              <div class="stat wide"><span class="muted">ยอดขายสะสม</span><b id="profile-total-sales">฿ 0</b></div>
+            </div>
+          </div>
+
+          <!-- Navigation to Settings Screen -->
+          <button class="outline" onclick="show('settings')" style="width:100%;margin-bottom:12px;font-size:14px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px">
+            ⚙️ การตั้งค่าระบบ & สำรองข้อมูล
+          </button>
+
+          <!-- Navigation to Login Screen -->
+          <button class="outline" onclick="show('login')" style="width:100%;margin-bottom:12px;font-size:14px;padding:12px;display:flex;align-items:center;justify-content:center;gap:8px">
+            🔐 บัญชีผู้ใช้ & คลาวด์ซิงค์
+          </button>
+
+          <!-- Sync Indicator (hidden initially until connected) -->
+          <div id="sync-indicator" class="hidden" style="display:none;font-size:12px;font-weight:600;margin-bottom:12px;padding:6px 10px;border-radius:20px;text-align:center;background:#e5f7ef;color:#11885b">
+            🟢 ทำงานออฟไลน์ (บันทึกในเครื่อง)
+          </div>
+
+          <!-- Download Android APK -->
+          <a href="/BahtBridge.apk" download="BahtBridge.apk" class="primary" style="display:block;text-align:center;text-decoration:none;margin-bottom:12px;background:#16a36a;box-shadow:0 8px 17px #16a36a38">
+            📥 ดาวน์โหลดแอป Android (.apk)
+          </a>
+
+          <!-- Logout & Delete Account -->
+          <button class="outline" id="btn-logout" style="color:var(--red,#df4c53);border-color:#f5c0c2;margin-bottom:8px">🚪 ออกจากระบบ</button>
+          <button class="outline" id="btn-delete-account" style="color:#999;border-color:#eee;margin-bottom:10px;font-size:12px">⚠️ ลบบัญชีและข้อมูลทั้งหมด</button>
+        </div>
+        <nav class="bottom">
+          <div class="nav" onclick="show('dashboard')"><span>⌂</span>Dashboard</div>
+          <div class="nav" onclick="show('orders')"><span>▤</span>Orders</div>
+          <div class="nav on" onclick="show('profile')"><span>♙</span>Profile</div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 8. SETTINGS SCREEN                        -->
+      <!-- ========================================== -->
+      <section class="screen" id="settings">
+        <div class="screen-body">
+          <div class="top">
+            <span class="back" onclick="show('profile')">‹</span>
+            <div class="brand">ตั้งค่าระบบ</div>
+            <span></span>
+          </div>
+          <h1 class="page-title">การตั้งค่า (Settings)</h1>
+          <p class="sub">กำหนดค่าเริ่มต้นสำหรับค่าจัดส่ง ค่าบริการ และอัตราแลกเปลี่ยน</p>
+
+          <div class="form-card" style="margin-bottom:14px">
+            <div class="section-title" style="margin-top:0">ค่าเริ่มต้นออเดอร์</div>
+            <div class="field">
+              <label>ค่าจัดส่งเริ่มต้น (บาท)</label>
+              <input type="number" id="set-default-shipping" class="input" placeholder="150" min="0" />
+            </div>
+            <div class="two">
+              <div class="field">
+                <label>ประเภทค่าบริการ</label>
+                <select id="set-fee-type" class="input">
+                  <option value="fixed">คงที่ (บาท)</option>
+                  <option value="percent">เปอร์เซ็นต์ (%)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>มูลค่าค่าบริการ</label>
+                <input type="number" id="set-fee-value" class="input" placeholder="100" min="0" step="any" />
+              </div>
+            </div>
+            <div class="field">
+              <label>บวกส่วนต่างเรทแลกเปลี่ยน (% Rate Markup)</label>
+              <input type="number" id="set-markup" class="input" placeholder="0" min="0" max="100" step="any" />
+            </div>
+            <button class="primary" id="btn-save-settings" style="margin-top:6px">💾 บันทึกการตั้งค่า</button>
+          </div>
+
+          <div class="form-card" style="margin-bottom:14px">
+            <div class="section-title" style="margin-top:0">สำรองและกู้คืนข้อมูล (Backup & Restore)</div>
+            <p class="sub" style="margin-bottom:12px;font-size:12px">ป้องกันข้อมูลสูญหายเมื่อล้างแคช หรือย้ายอุปกรณ์</p>
+            <div class="two">
+              <button class="outline" id="btn-backup" style="padding:10px;font-size:13px">📤 สำรองข้อมูล</button>
+              <button class="outline" id="btn-import" style="padding:10px;font-size:13px">📥 นำเข้าข้อมูล</button>
+            </div>
+            <input type="file" id="import-file" accept=".json" class="hidden" style="display:none" />
+            <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+              สำรองข้อมูลล่าสุด: <b id="last-backup" style="color:var(--navy)">ยังไม่เคยสำรองข้อมูล</b>
+            </div>
+          </div>
+        </div>
+        <nav class="bottom">
+          <div class="nav" onclick="show('dashboard')"><span>⌂</span>Dashboard</div>
+          <div class="nav" onclick="show('orders')"><span>▤</span>Orders</div>
+          <div class="nav on" onclick="show('profile')"><span>♙</span>Profile</div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 9. LOGIN SCREEN                           -->
+      <!-- ========================================== -->
+      <section class="screen" id="login">
+        <div class="screen-body">
+          <div class="top">
+            <span class="back" onclick="show('profile')">‹</span>
+            <div class="brand"><i>฿</i>BahtBridge</div>
+            <span></span>
+          </div>
+          <div style="text-align:center;padding:24px 0 16px">
+            <div style="font-size:42px;margin-bottom:10px">🔐</div>
+            <h1 class="page-title">เข้าสู่ระบบ</h1>
+            <p class="sub">เข้าสู่ระบบเพื่อซิงค์ข้อมูลร้านค้าไปยังคลาวด์</p>
+          </div>
+          <div class="form-card">
+            <div class="field">
+              <label>อีเมลสำหรับเข้าสู่ระบบ</label>
+              <input class="input" id="login-email" type="email" placeholder="merchant@example.com" />
+            </div>
+            <button class="primary" id="btn-login-email" style="margin-bottom:10px">✉️ เข้าสู่ระบบ Magic Link</button>
+            <button class="outline" id="btn-login-google" style="margin-bottom:12px">🌐 เข้าสู่ระบบ Google</button>
+            <div id="login-msg" style="font-size:13px;text-align:center;color:var(--muted)"></div>
+          </div>
+        </div>
+        <nav class="bottom">
+          <div class="nav" onclick="show('dashboard')"><span>⌂</span>Dashboard</div>
+          <div class="nav" onclick="show('orders')"><span>▤</span>Orders</div>
+          <div class="nav on" onclick="show('profile')"><span>♙</span>Profile</div>
+        </nav>
+      </section>
+
+      <!-- ========================================== -->
+      <!-- 10. SUCCESS SCREEN                        -->
+      <!-- ========================================== -->
+      <section class="screen" id="success">
+        <div class="screen-body">
+          <div class="center-state">
+            <div class="state-icon" style="background:#e5f7ef;font-size:40px">✓</div>
+            <h2 style="color:var(--green,#16a36a)">บันทึกออเดอร์สำเร็จ!</h2>
+            <p>บันทึกข้อมูลลูกค้าและออเดอร์เรียบร้อยแล้ว<br>สามารถดูย้อนหลังในหน้ารายการออเดอร์ได้ทันที</p>
+            <div style="background:#fff;border-radius:16px;border:1px solid var(--line);padding:16px;margin-bottom:20px;text-align:left">
+              <div class="row" style="margin-bottom:8px"><span class="muted">เลขออเดอร์</span><strong id="success-order-id">#BR001</strong></div>
+              <div class="row" style="margin-bottom:8px"><span class="muted">ลูกค้า</span><strong id="success-customer-name">คุณปิยะ วัฒนะ</strong></div>
+              <div class="row" style="margin-bottom:8px"><span class="muted">เบอร์โทร</span><strong id="success-customer-phone">081-234-5678</strong></div>
+              <div class="row"><span class="muted">ยอดรวม</span><strong id="success-order-total" style="color:var(--navy)">฿ 0</strong></div>
+            </div>
+            <button class="primary" style="margin-bottom:10px" onclick="show('dashboard')">กลับหน้าหลัก (Dashboard)</button>
+            <button class="outline" onclick="show('orders')">ดูรายการออเดอร์ทั้งหมด</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Scripts -->
+  <script src="vendor/supabase.js"></script>
+  <script src="config.js"></script>
+  <script src="pricing.js"></script>
+  <script src="storage.js"></script>
+  <script src="supabase-storage.js"></script>
+  <script src="auth.js"></script>
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(console.error);
+      });
+    }
+  </script>
+</body>
+</html>
