@@ -178,3 +178,4 @@ describe('Status Engine (status.js)', () => {
     assert.ok(shareText.includes('ยอดค้างชำระ'));
   });
 });
+
