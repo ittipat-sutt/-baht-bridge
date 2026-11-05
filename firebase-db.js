@@ -1,6 +1,6 @@
 /**
- * BahtBridge — Firebase Firestore Storage Service (firebase-db.js)
- * Real-time synchronization with Google Cloud Firestore + Offline Fallback
+ * BahtBridge — Firebase Firestore & Auth Service (firebase-db.js)
+ * Real-time synchronization with Google Cloud Firestore + Google Sign-In Auth
  * Compliant with DATA_MODEL.md & HTML_CONTRACT.md
  */
 
@@ -14,6 +14,8 @@
   'use strict';
 
   let db = null;
+  let auth = null;
+  let currentUser = null;
   let isInitialized = false;
 
   function getConfig() {
@@ -35,14 +37,50 @@
         window.firebase.initializeApp(cfg);
       }
       db = window.firebase.firestore();
+      auth = window.firebase.auth();
       isInitialized = true;
-      console.log('🔥 [FirebaseDB] Connected to Cloud Firestore:', cfg.projectId);
+      console.log('🔥 [FirebaseDB] Connected to Cloud Firestore & Auth:', cfg.projectId);
+
+      // Listen for auth state change
+      auth.onAuthStateChanged((user) => {
+        currentUser = user;
+        if (user) {
+          console.log('👤 [Firebase] User signed in:', user.displayName, user.email);
+          onUserSignedIn(user);
+        } else {
+          console.log('👤 [Firebase] No user signed in');
+          updateSyncStatus(true);
+        }
+      });
+
+      setupAuthButtons();
       updateSyncStatus(true);
     } catch (err) {
       console.warn('⚠️ [FirebaseDB] Initialization failed:', err);
     }
 
     return db;
+  }
+
+  function onUserSignedIn(user) {
+    updateSyncStatus(true);
+    if (typeof document === 'undefined') return;
+
+    // อัปเดต UI Profile
+    const nameEl = document.getElementById('profile-merchant-name');
+    if (nameEl && user.displayName) nameEl.textContent = user.displayName;
+
+    const emailEl = document.getElementById('profile-merchant-email');
+    if (emailEl && user.email) emailEl.textContent = user.email;
+
+    // อัปเดต Avatar ทักทาย
+    const avatarEl = document.querySelector('.avatar');
+    if (avatarEl && user.displayName) avatarEl.textContent = user.displayName[0].toUpperCase();
+
+    // แสดง Toast แจ้งเตือน
+    if (window.UI && window.UI.showToast) {
+      window.UI.showToast(`ยินดีต้อนรับ, ${user.displayName || user.email} 👋`, 'success');
+    }
   }
 
   function updateSyncStatus(connected) {
@@ -53,7 +91,11 @@
     el.classList.remove('hidden');
     el.style.display = 'block';
 
-    if (connected) {
+    if (currentUser) {
+      el.style.background = '#e5f7ef';
+      el.style.color = '#11885b';
+      el.textContent = `🟢 บัญชี: ${currentUser.displayName || currentUser.email} (ซิงค์คลาวด์)`;
+    } else if (connected) {
       el.style.background = '#e5f7ef';
       el.style.color = '#11885b';
       el.textContent = '🟢 เชื่อมต่อ Cloud Firestore แล้ว (ซิงค์เรียลไทม์)';
@@ -64,12 +106,63 @@
     }
   }
 
+  // ─── Google Sign-In ─────────────────────────────────────────────────────────
+  async function signInWithGoogle() {
+    if (!auth) init();
+    if (!auth) {
+      alert('Firebase ยังไม่ได้ตั้งค่า');
+      return;
+    }
+
+    try {
+      const provider = new window.firebase.auth.GoogleAuthProvider();
+      provider.addScope('profile');
+      provider.addScope('email');
+
+      // ใช้ signInWithPopup
+      const result = await auth.signInWithPopup(provider);
+      currentUser = result.user;
+      if (typeof window !== 'undefined' && window.show) {
+        window.show('dashboard');
+      }
+    } catch (err) {
+      console.error('Google Sign-in error:', err);
+      if (err.code !== 'auth/popup-closed-by-user') {
+        alert('เข้าสู่ระบบด้วย Google ไม่สำเร็จ: ' + err.message);
+      }
+    }
+  }
+
+  async function signOut() {
+    if (auth) {
+      try {
+        await auth.signOut();
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    currentUser = null;
+    updateSyncStatus(true);
+    if (window.UI && window.UI.showToast) {
+      window.UI.showToast('ออกจากระบบเรียบร้อยแล้ว', 'info');
+    }
+  }
+
+  function setupAuthButtons() {
+    if (typeof document === 'undefined') return;
+    const googleBtn = document.getElementById('btn-login-google');
+    if (googleBtn) {
+      googleBtn.onclick = signInWithGoogle;
+    }
+
+    const logoutBtn = document.getElementById('btn-logout');
+    if (logoutBtn) {
+      logoutBtn.onclick = signOut;
+    }
+  }
+
   // ─── CRUD Methods for Orders ────────────────────────────────────────────────
 
-  /**
-   * บันทึกหรืออัปเดตออเดอร์ขึ้น Firestore
-   * @param {Object} order
-   */
   async function saveOrder(order) {
     if (!order || !order.id) return;
     const firestore = init();
@@ -79,9 +172,12 @@
     }
 
     try {
-      // คัดลอกและแปลงเป็น Object ที่ Firestore ยอมรับ
       const cleanOrder = JSON.parse(JSON.stringify(order));
       cleanOrder.updatedAt = new Date().toISOString();
+      if (currentUser) {
+        cleanOrder.userId = currentUser.uid;
+        cleanOrder.userEmail = currentUser.email;
+      }
 
       await firestore.collection('orders').doc(cleanOrder.id).set(cleanOrder, { merge: true });
       updateSyncStatus(true);
@@ -92,10 +188,6 @@
     }
   }
 
-  /**
-   * ดึงรายการออเดอร์ทั้งหมดจาก Firestore
-   * @returns {Promise<Array>}
-   */
   async function getOrders() {
     const firestore = init();
     if (!firestore || !navigator.onLine) return null;
@@ -115,10 +207,6 @@
     }
   }
 
-  /**
-   * ลบออเดอร์จาก Firestore
-   * @param {string} orderId
-   */
   async function deleteOrder(orderId) {
     if (!orderId) return;
     const firestore = init();
@@ -132,10 +220,6 @@
     }
   }
 
-  /**
-   * บันทึกการตั้งค่าร้านค้าขึ้น Firestore
-   * @param {Object} settings
-   */
   async function saveSettings(settings) {
     const firestore = init();
     if (!firestore || !navigator.onLine) return;
@@ -149,12 +233,14 @@
 
   return {
     init,
+    signInWithGoogle,
+    signOut,
     saveOrder,
     getOrders,
     deleteOrder,
     saveSettings,
     updateSyncStatus,
+    getCurrentUser: () => currentUser,
     _getDb: () => db,
   };
 });
-
