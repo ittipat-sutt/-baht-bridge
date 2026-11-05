@@ -101,3 +101,4 @@ describe('Pricing Engine (pricing.js)', () => {
     assert.equal(result.totalThb, 3680);
   });
 });
+
