@@ -1,7 +1,22 @@
 /**
- * BahtBridge — Comprehensive App Logic
- * Merged: Real Exchange Rate API + Order & Customer Management + LocalStorage Persistence
+ * BahtBridge — Order & Customer Management Logic
+ * Step 2 Improvements:
+ * 1. Fixed duplicate item addition bug (prevent double listener binding)
+ * 2. Locked exchange rate per order (frozen rateAtOrder, won't drift with live rates)
+ * 3. Dynamic editable shipping fee and service fee
+ * 4. XSS sanitization for all user inputs & clean initial state
  */
+
+// XSS Sanitizer Helper
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
 
 // Navigation & Tab Highlighting
 function updateNavActive(screenId) {
@@ -31,7 +46,7 @@ function show(id) {
 }
 
 // Exchange Rates & API Integration
-const FALLBACK_RATES = { USD: 33, JPY: 0.22, KRW: 0.025, CNY: 4.55, EUR: 36.2 };
+const FALLBACK_RATES = { USD: 33.0, JPY: 0.22, KRW: 0.025, CNY: 4.55, EUR: 36.2 };
 let exchangeRates = { ...FALLBACK_RATES };
 let ratesLastFetched = null;
 
@@ -108,28 +123,40 @@ const defaultOrders = [
     customerName: 'คุณปิยะ วัฒนะ',
     customerPhone: '081-234-5678',
     customerAddress: 'LINE: @piya',
-    date: '24 ก.ย. 2569',
-    status: 'กำลังดำเนินการ',
+    createdAt: '2026-11-04T07:30:00.000Z',
+    dateFormatted: '4 พ.ย. 2569',
+    orderStatus: 'pending',
+    paymentStatus: 'paid',
+    trackingNumber: '',
+    shippingProvider: 'Flash Express',
+    shippingFee: 150,
+    serviceFee: 100,
     items: [
-      { name: 'Shoes', currency: 'USD', amount: 50, quantity: 1 },
-      { name: 'Figure', currency: 'JPY', amount: 5000, quantity: 1 },
-      { name: 'Shirt', currency: 'KRW', amount: 30000, quantity: 1 },
+      { id: 'it_1', name: 'Shoes', currency: 'USD', amount: 50, quantity: 1, exchangeRate: 33.0, convertedPriceTHB: 1650, subtotalTHB: 1650 },
+      { id: 'it_2', name: 'Figure', currency: 'JPY', amount: 5000, quantity: 1, exchangeRate: 0.22, convertedPriceTHB: 1100, subtotalTHB: 1100 },
+      { id: 'it_3', name: 'Shirt', currency: 'KRW', amount: 30000, quantity: 1, exchangeRate: 0.025, convertedPriceTHB: 750, subtotalTHB: 750 },
     ],
-    shipping: 150,
-    fee: 100,
+    goodsTotal: 3500,
+    grandTotal: 3750,
   },
   {
     id: '#BR002',
     customerName: 'คุณนิดา เกียรติสกุล',
     customerPhone: '089-876-5432',
     customerAddress: 'IG: @nida_shop',
-    date: '23 ก.ย. 2569',
-    status: 'ยืนยันแล้ว',
+    createdAt: '2026-11-03T09:00:00.000Z',
+    dateFormatted: '3 พ.ย. 2569',
+    orderStatus: 'completed',
+    paymentStatus: 'paid',
+    trackingNumber: 'TH0192837465',
+    shippingProvider: 'ไปรษณีย์ไทย (EMS)',
+    shippingFee: 100,
+    serviceFee: 100,
     items: [
-      { name: 'Headphone', currency: 'USD', amount: 60, quantity: 1 },
+      { id: 'it_4', name: 'Headphone', currency: 'USD', amount: 60, quantity: 1, exchangeRate: 33.16, convertedPriceTHB: 1990, subtotalTHB: 1990 },
     ],
-    shipping: 110,
-    fee: 100,
+    goodsTotal: 1990,
+    grandTotal: 2190,
   },
 ];
 
@@ -155,17 +182,19 @@ function saveOrdersToStorage(orders) {
   }
 }
 
-// Current Draft Products in Create Form
-let draftProducts = [
-  { name: 'Shoes', currency: 'USD', amount: 50, quantity: 1 },
-  { name: 'Figure', currency: 'JPY', amount: 5000, quantity: 1 },
-];
-
+// Current Draft Products in Create Form (Starts clean!)
+let draftProducts = [];
 let activeViewingOrder = null;
 
 const money = (amount) => `฿ ${Math.round(amount).toLocaleString('th-TH')}`;
-const productTotal = (p) => p.amount * p.quantity * (exchangeRates[p.currency] || 1);
-const calcTotalGoods = (items) => items.reduce((sum, item) => sum + productTotal(item), 0);
+
+// Calculate item total using its LOCKED rate if present, or live rate if in draft
+function getItemTotal(p) {
+  const rate = p.exchangeRate !== undefined ? p.exchangeRate : (exchangeRates[p.currency] || 1);
+  return p.amount * p.quantity * rate;
+}
+
+const calcTotalGoods = (items) => (items || []).reduce((sum, item) => sum + getItemTotal(item), 0);
 
 // Render Draft Products in Create Screen
 function renderCreateProducts() {
@@ -173,31 +202,46 @@ function renderCreateProducts() {
   if (!container) return;
   container.innerHTML = '';
 
-  draftProducts.forEach((product, index) => {
-    const [flag] = countryInfo[product.currency] || ['🌐', ''];
-    const rate = exchangeRates[product.currency] || 1;
-    const card = document.createElement('div');
-    card.className = 'mini-product';
-    card.innerHTML = `
-      <div class="row">
-        <span class="product-title">${flag} ${product.name}</span>
-        <div>
-          <b>${product.amount.toLocaleString()} ${product.currency} × ${product.quantity}</b>
-          <button class="del-btn" onclick="deleteDraftProduct(${index})" title="ลบสินค้านี้">🗑️</button>
-        </div>
-      </div>
-      <div class="convert">
-        อัตราแลกเปลี่ยน ${rate} <b>→ ${money(productTotal(product))}</b>
+  if (draftProducts.length === 0) {
+    container.innerHTML = `
+      <div style="text-align:center;padding:22px 14px;color:var(--muted);background:#fbfcfe;border:1px dashed #dbe5ef;border-radius:14px;margin-top:12px;font-size:13px">
+        🛒 ยังไม่มีสินค้าในออเดอร์นี้<br><small>กรอกชื่อสินค้า ราคา สกุลเงิน แล้วกด <b>＋ เพิ่มสินค้า</b></small>
       </div>
     `;
-    container.appendChild(card);
-  });
+  } else {
+    draftProducts.forEach((product, index) => {
+      const [flag] = countryInfo[product.currency] || ['🌐', ''];
+      const rate = product.exchangeRate !== undefined ? product.exchangeRate : (exchangeRates[product.currency] || 1);
+      const subtotal = getItemTotal(product);
+      const card = document.createElement('div');
+      card.className = 'mini-product';
+      card.innerHTML = `
+        <div class="row">
+          <span class="product-title">${flag} ${escapeHtml(product.name)}</span>
+          <div>
+            <b>${Number(product.amount).toLocaleString()} ${escapeHtml(product.currency)} × ${product.quantity}</b>
+            <button class="del-btn" onclick="deleteDraftProduct(${index})" title="ลบสินค้านี้">🗑️</button>
+          </div>
+        </div>
+        <div class="convert">
+          อัตราแลกเปลี่ยน ${rate} <b>→ ${money(subtotal)}</b>
+        </div>
+      `;
+      container.appendChild(card);
+    });
+  }
 
+  // Live Summary calculation with editable shipping and service fees
   const goods = calcTotalGoods(draftProducts);
+  const shippingInput = document.getElementById('input-shipping-fee');
+  const serviceInput = document.getElementById('input-service-fee');
+  const shippingFee = shippingInput ? Math.max(0, Number(shippingInput.value) || 0) : 150;
+  const serviceFee = serviceInput ? Math.max(0, Number(serviceInput.value) || 0) : 100;
+
   const goodsEl = document.getElementById('summary-goods');
   const totalEl = document.getElementById('summary-total');
   if (goodsEl) goodsEl.textContent = money(goods);
-  if (totalEl) totalEl.textContent = money(goods > 0 ? goods + 250 : 0);
+  if (totalEl) totalEl.textContent = money(goods > 0 ? goods + shippingFee + serviceFee : 0);
 }
 
 function deleteDraftProduct(index) {
@@ -205,8 +249,11 @@ function deleteDraftProduct(index) {
   renderCreateProducts();
 }
 
-// Setup Form for adding products & selects
+// Setup Form for adding products & selects (Idempotent: binds listener only once!)
+let isOrderFormInitialized = false;
+
 function setupOrderForm() {
+  if (isOrderFormInitialized) return;
   const create = document.getElementById('create');
   if (!create) return;
 
@@ -225,7 +272,8 @@ function setupOrderForm() {
 
   const addBtn = document.getElementById('btn-add-product');
   if (addBtn) {
-    addBtn.addEventListener('click', () => {
+    // Replace with single onclick handler to ensure no duplicate event listener
+    addBtn.onclick = () => {
       const nameInput = document.getElementById('product-name');
       const priceInput = document.getElementById('product-price');
       const qtyInput = document.getElementById('product-qty');
@@ -236,7 +284,7 @@ function setupOrderForm() {
       const quantity = Number(qtyInput.value);
 
       const errors = [];
-      if (!name) errors.push('• ชื่อสินค้า');
+      if (!name) errors.push('• ชื่อสินค้า (ห้ามเว้นว่าง)');
       if (!amount || amount <= 0) errors.push('• ราคาสินค้า (ต้องมากกว่า 0)');
       if (!quantity || quantity <= 0 || !Number.isInteger(quantity)) errors.push('• จำนวนสินค้า (ต้องเป็นจำนวนเต็มอย่างน้อย 1)');
 
@@ -245,13 +293,25 @@ function setupOrderForm() {
         return;
       }
 
-      draftProducts.push({ name, currency, amount, quantity });
+      // Lock current rate into item upon addition
+      const lockedRate = exchangeRates[currency] || 1;
+      draftProducts.push({
+        id: 'it_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4),
+        name,
+        currency,
+        amount,
+        quantity,
+        exchangeRate: lockedRate,
+      });
+
       nameInput.value = '';
       priceInput.value = '';
       qtyInput.value = '1';
       renderCreateProducts();
-    });
+    };
   }
+
+  isOrderFormInitialized = true;
 }
 
 // Calculate & Prepare Order Detail from Form Inputs with Live API
@@ -267,14 +327,20 @@ async function calculateOrder() {
   }
 
   if (draftProducts.length === 0) {
-    alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการ');
+    alert('กรุณาเพิ่มสินค้าอย่างน้อย 1 รายการก่อนคำนวณราคา');
+    document.getElementById('product-name')?.focus();
     return;
   }
+
+  const shippingInput = document.getElementById('input-shipping-fee');
+  const serviceInput = document.getElementById('input-service-fee');
+  const shippingFee = shippingInput ? Math.max(0, Number(shippingInput.value) || 0) : 150;
+  const serviceFee = serviceInput ? Math.max(0, Number(serviceInput.value) || 0) : 100;
 
   const calcBtn = document.querySelector('#create .sticky .primary');
   if (calcBtn) {
     calcBtn.disabled = true;
-    calcBtn.textContent = 'กำลังคำนวณ...';
+    calcBtn.textContent = 'กำลังคำนวณราคา...';
   }
 
   show('loading');
@@ -284,20 +350,34 @@ async function calculateOrder() {
   } catch (err) {
     console.error('Error fetching rates:', err);
   } finally {
+    // Snap and lock the exchange rate into all items in draft
+    draftProducts.forEach((item) => {
+      if (item.exchangeRate === undefined) {
+        item.exchangeRate = exchangeRates[item.currency] || 1;
+      }
+      item.convertedPriceTHB = Math.round(item.amount * item.exchangeRate);
+      item.subtotalTHB = Math.round(item.amount * item.exchangeRate * item.quantity);
+    });
+
     const goods = calcTotalGoods(draftProducts);
-    const total = goods + 250;
+    const grandTotal = goods + shippingFee + serviceFee;
 
     activeViewingOrder = {
       id: 'DRAFT',
       customerName: custName,
       customerPhone: custPhone || '-',
       customerAddress: custAddress || '-',
-      date: 'วันนี้',
-      status: 'กำลังดำเนินการ',
-      items: [...draftProducts],
-      shipping: 150,
-      fee: 100,
-      total: total,
+      createdAt: new Date().toISOString(),
+      dateFormatted: 'วันนี้',
+      orderStatus: 'pending',
+      paymentStatus: 'unpaid',
+      trackingNumber: '',
+      shippingProvider: 'Flash Express',
+      shippingFee: shippingFee,
+      serviceFee: serviceFee,
+      items: JSON.parse(JSON.stringify(draftProducts)),
+      goodsTotal: goods,
+      grandTotal: grandTotal,
       isDraft: true,
     };
 
@@ -315,95 +395,115 @@ async function calculateOrder() {
 // Populate Detail Screen
 function populateDetailScreen(order) {
   const title = document.getElementById('detail-order-title');
-  if (title) title.textContent = order.isDraft ? 'สรุปคำนวณออเดอร์ใหม่' : `รายละเอียดออเดอร์ ${order.id}`;
+  if (title) title.textContent = order.isDraft ? 'สรุปคำนวณออเดอร์ใหม่' : `รายละเอียดออเดอร์ ${escapeHtml(order.id)}`;
 
   const nameEl = document.getElementById('detail-customer-name');
-  if (nameEl) nameEl.textContent = order.customerName;
+  if (nameEl) nameEl.textContent = order.customerName || '-';
 
   const contactEl = document.getElementById('detail-customer-contact');
   if (contactEl) {
-    contactEl.textContent = `📞 ${order.customerPhone} · ${order.customerAddress}`;
+    contactEl.textContent = `📞 ${order.customerPhone || '-'} · ${order.customerAddress || '-'}`;
   }
 
   const metaEl = document.getElementById('detail-order-meta');
   if (metaEl) {
-    metaEl.innerHTML = `${order.date} · <span style="color:${order.status === 'ยืนยันแล้ว' ? '#16a36a' : '#ffb020'}">● ${order.status}</span>`;
+    const isDone = order.orderStatus === 'completed' || order.orderStatus === 'ยืนยันแล้ว';
+    const statusText = isDone ? 'ยืนยันแล้ว' : 'รอดำเนินการ';
+    metaEl.innerHTML = `${escapeHtml(order.dateFormatted || 'วันนี้')} · <span style="color:${isDone ? '#16a36a' : '#ffb020'}">● ${statusText}</span>`;
   }
 
   const listEl = document.getElementById('detail-items-list');
   if (listEl) {
     listEl.innerHTML = '';
-    order.items.forEach((p) => {
+    (order.items || []).forEach((p) => {
       const [flag] = countryInfo[p.currency] || ['🌐'];
-      const rate = exchangeRates[p.currency] || 1;
+      const rate = p.exchangeRate !== undefined ? p.exchangeRate : (exchangeRates[p.currency] || 1);
+      const subtotal = getItemTotal(p);
       const item = document.createElement('div');
       item.className = 'item';
       item.innerHTML = `
         <div class="flag">${flag}</div>
         <div class="item-info">
-          <strong>${p.name}</strong>
-          <small>${p.amount.toLocaleString()} ${p.currency} × ${p.quantity} · Rate ${rate}</small>
+          <strong>${escapeHtml(p.name)}</strong>
+          <small>${Number(p.amount).toLocaleString()} ${escapeHtml(p.currency)} × ${p.quantity} · Rate ${rate} (ล็อกแล้ว)</small>
         </div>
-        <div class="price">→ ${money(productTotal(p))}<small>แปลงแล้ว</small></div>
+        <div class="price">→ ${money(subtotal)}<small>แปลงแล้ว</small></div>
       `;
       listEl.appendChild(item);
     });
   }
 
-  const goods = calcTotalGoods(order.items);
+  const goods = order.goodsTotal !== undefined ? order.goodsTotal : calcTotalGoods(order.items);
+  const shipping = order.shippingFee !== undefined ? order.shippingFee : (order.shipping || 150);
+  const service = order.serviceFee !== undefined ? order.serviceFee : (order.fee || 100);
+  const total = order.grandTotal !== undefined ? order.grandTotal : (goods + shipping + service);
+
   const goodsEl = document.getElementById('detail-summary-goods');
+  const shippingEl = document.getElementById('detail-summary-shipping');
+  const serviceEl = document.getElementById('detail-summary-service');
   const totalEl = document.getElementById('detail-summary-total');
+
   if (goodsEl) goodsEl.textContent = money(goods);
-  if (totalEl) totalEl.textContent = money(goods + order.shipping + order.fee);
+  if (shippingEl) shippingEl.textContent = money(shipping);
+  if (serviceEl) serviceEl.textContent = money(service);
+  if (totalEl) totalEl.textContent = money(total);
 
   const confirmBtn = document.getElementById('btn-confirm-order');
   if (confirmBtn) {
-    confirmBtn.textContent = order.isDraft ? 'บันทึก & ยืนยันออเดอร์' : 'อัปเดตสถานะเป็นยืนยันแล้ว';
+    confirmBtn.textContent = order.isDraft ? 'บันทึก & ยืนยันออเดอร์' : 'อัปเดตสถานะเป็นสำเร็จ';
   }
 }
 
 // Populate Customer View Screen
 function populateCustomerScreen(order) {
-  const goods = calcTotalGoods(order.items);
-  const total = goods + order.shipping + order.fee;
+  const goods = order.goodsTotal !== undefined ? order.goodsTotal : calcTotalGoods(order.items);
+  const shipping = order.shippingFee !== undefined ? order.shippingFee : (order.shipping || 150);
+  const service = order.serviceFee !== undefined ? order.serviceFee : (order.fee || 100);
+  const total = order.grandTotal !== undefined ? order.grandTotal : (goods + shipping + service);
 
   const idEl = document.getElementById('cust-view-order-id');
-  if (idEl) idEl.textContent = order.isDraft ? 'ออเดอร์ใหม่ของคุณ' : `Order ${order.id}`;
+  if (idEl) idEl.textContent = order.isDraft ? 'ออเดอร์ใหม่ของคุณ' : `Order ${escapeHtml(order.id)}`;
 
   const nameEl = document.getElementById('cust-view-name');
-  if (nameEl) nameEl.textContent = order.customerName;
+  if (nameEl) nameEl.textContent = order.customerName || '-';
 
   const contactEl = document.getElementById('cust-view-contact');
-  if (contactEl) contactEl.textContent = `📞 ${order.customerPhone}`;
+  if (contactEl) contactEl.textContent = `📞 ${order.customerPhone || '-'}`;
 
   const dueEl = document.getElementById('cust-view-due');
   if (dueEl) dueEl.textContent = `${Math.round(total).toLocaleString('th-TH')} ฿`;
 
   const countEl = document.getElementById('cust-view-count');
-  if (countEl) countEl.textContent = `${order.items.length} รายการ`;
+  if (countEl) countEl.textContent = `${(order.items || []).length} รายการ`;
 
   const listEl = document.getElementById('customer-items-list');
   if (listEl) {
     listEl.innerHTML = '';
-    order.items.forEach((p, idx) => {
+    (order.items || []).forEach((p, idx) => {
       const [flag, country] = countryInfo[p.currency] || ['🌐', 'ต่างประเทศ'];
+      const subtotal = getItemTotal(p);
       const item = document.createElement('div');
       item.className = 'item';
       item.innerHTML = `
         <div class="photo">${productIcons[idx % productIcons.length]}</div>
         <div class="item-info">
-          <strong>${p.name}</strong>
-          <small>${flag} ${country} · ${p.amount.toLocaleString()} ${p.currency} (×${p.quantity})</small>
+          <strong>${escapeHtml(p.name)}</strong>
+          <small>${flag} ${country} · ${Number(p.amount).toLocaleString()} ${escapeHtml(p.currency)} (×${p.quantity})</small>
         </div>
-        <div class="price">${money(productTotal(p))}</div>
+        <div class="price">${money(subtotal)}</div>
       `;
       listEl.appendChild(item);
     });
   }
 
   const sumGoods = document.getElementById('cust-summary-goods');
+  const sumShipping = document.getElementById('cust-summary-shipping');
+  const sumService = document.getElementById('cust-summary-service');
   const sumTotal = document.getElementById('cust-summary-total');
+
   if (sumGoods) sumGoods.textContent = money(goods);
+  if (sumShipping) sumShipping.textContent = money(shipping);
+  if (sumService) sumService.textContent = money(service);
   if (sumTotal) sumTotal.textContent = money(total);
 }
 
@@ -418,8 +518,10 @@ function confirmCurrentOrder() {
     const newOrder = {
       ...activeViewingOrder,
       id: `#BR${nextNumber}`,
-      date: 'วันนี้',
-      status: 'กำลังดำเนินการ',
+      createdAt: new Date().toISOString(),
+      dateFormatted: 'วันนี้',
+      orderStatus: 'pending',
+      paymentStatus: 'unpaid',
       isDraft: false,
     };
     orders.unshift(newOrder);
@@ -434,9 +536,9 @@ function confirmCurrentOrder() {
     if (idEl) idEl.textContent = newOrder.id;
     if (nameEl) nameEl.textContent = newOrder.customerName;
     if (phoneEl) phoneEl.textContent = newOrder.customerPhone;
-    if (totalEl) totalEl.textContent = money(calcTotalGoods(newOrder.items) + 250);
+    if (totalEl) totalEl.textContent = money(newOrder.grandTotal);
 
-    // Reset draft form
+    // Reset draft form completely
     draftProducts = [];
     const custName = document.getElementById('cust-name');
     const custPhone = document.getElementById('cust-phone');
@@ -446,7 +548,7 @@ function confirmCurrentOrder() {
     if (custAddress) custAddress.value = '';
     renderCreateProducts();
   } else {
-    activeViewingOrder.status = 'ยืนยันแล้ว';
+    activeViewingOrder.orderStatus = 'completed';
     const idx = orders.findIndex((o) => o.id === activeViewingOrder.id);
     if (idx !== -1) {
       orders[idx] = activeViewingOrder;
@@ -475,8 +577,11 @@ function viewOrderDetail(orderId) {
 function renderDashboard() {
   const orders = getStoredOrders();
   const totalCount = orders.length;
-  const pendingCount = orders.filter((o) => o.status === 'กำลังดำเนินการ').length;
-  const totalSales = orders.reduce((sum, o) => sum + calcTotalGoods(o.items) + (o.shipping || 150) + (o.fee || 100), 0);
+  const pendingCount = orders.filter((o) => o.orderStatus !== 'completed' && o.status !== 'ยืนยันแล้ว').length;
+  const totalSales = orders.reduce((sum, o) => {
+    const t = o.grandTotal !== undefined ? o.grandTotal : (calcTotalGoods(o.items) + (o.shipping || 150) + (o.fee || 100));
+    return sum + t;
+  }, 0);
 
   const totalEl = document.getElementById('stat-total-orders');
   const pendingEl = document.getElementById('stat-pending-orders');
@@ -492,17 +597,18 @@ function renderDashboard() {
 
   const recents = orders.slice(0, 3);
   recents.forEach((order) => {
-    const total = calcTotalGoods(order.items) + (order.shipping || 150) + (order.fee || 100);
+    const total = order.grandTotal !== undefined ? order.grandTotal : (calcTotalGoods(order.items) + (order.shipping || 150) + (order.fee || 100));
+    const isDone = order.orderStatus === 'completed' || order.status === 'ยืนยันแล้ว';
     const card = document.createElement('div');
     card.className = 'order';
     card.onclick = () => viewOrderDetail(order.id);
     card.innerHTML = `
       <div class="order-head">
-        <strong>${order.id} · ${order.customerName}</strong>
-        <span class="tag ${order.status === 'ยืนยันแล้ว' ? 'green' : ''}">${order.status}</span>
+        <strong>${escapeHtml(order.id)} · ${escapeHtml(order.customerName)}</strong>
+        <span class="tag ${isDone ? 'green' : ''}">${isDone ? 'ยืนยันแล้ว' : 'รอดำเนินการ'}</span>
       </div>
       <div class="order-meta">
-        ${order.items.length} สินค้า · ${order.date}
+        ${(order.items || []).length} สินค้า · ${escapeHtml(order.dateFormatted || order.date || 'วันนี้')}
         <span class="money" style="float:right">${money(total)}</span>
       </div>
     `;
@@ -520,18 +626,19 @@ function renderOrdersList() {
   cards.forEach((c) => c.remove());
 
   orders.forEach((order) => {
-    const total = calcTotalGoods(order.items) + (order.shipping || 150) + (order.fee || 100);
+    const total = order.grandTotal !== undefined ? order.grandTotal : (calcTotalGoods(order.items) + (order.shipping || 150) + (order.fee || 100));
+    const isDone = order.orderStatus === 'completed' || order.status === 'ยืนยันแล้ว';
     const card = document.createElement('div');
     card.className = 'order';
     card.dataset.search = `${order.id} ${order.customerName} ${order.customerPhone || ''}`.toLowerCase();
     card.onclick = () => viewOrderDetail(order.id);
     card.innerHTML = `
       <div class="order-head">
-        <strong>${order.id} · ${order.customerName}</strong>
-        <span class="tag ${order.status === 'ยืนยันแล้ว' ? 'green' : ''}">${order.status}</span>
+        <strong>${escapeHtml(order.id)} · ${escapeHtml(order.customerName)}</strong>
+        <span class="tag ${isDone ? 'green' : ''}">${isDone ? 'ยืนยันแล้ว' : 'รอดำเนินการ'}</span>
       </div>
       <div class="order-meta">
-        ${order.items.length} สินค้า · ${order.customerPhone || '-'}
+        ${(order.items || []).length} สินค้า · ${escapeHtml(order.customerPhone || '-')}
         <span class="money" style="float:right">${money(total)}</span>
       </div>
     `;
@@ -568,7 +675,7 @@ function filterOrders(query) {
 function shareOrderSummary() {
   if (!activeViewingOrder) return;
   const o = activeViewingOrder;
-  const total = calcTotalGoods(o.items) + (o.shipping || 150) + (o.fee || 100);
+  const total = o.grandTotal !== undefined ? o.grandTotal : (calcTotalGoods(o.items) + (o.shipping || 150) + (o.fee || 100));
   const text = `🛍️ สรุปออเดอร์ ${o.id || ''}\nลูกค้า: ${o.customerName}\nเบอร์โทร: ${o.customerPhone}\nยอดชำระ: ${money(total)}\n(BahtBridge)`;
 
   if (navigator.share) {
@@ -631,7 +738,7 @@ function importOrdersData(event) {
   event.target.value = '';
 }
 
-// Initialize Application
+// Initialize Application (Single call on DOM ready!)
 document.addEventListener('DOMContentLoaded', () => {
   setupOrderForm();
   renderCreateProducts();
@@ -642,14 +749,4 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDashboard();
     renderOrdersList();
   });
-});
-
-setupOrderForm();
-renderCreateProducts();
-renderDashboard();
-renderOrdersList();
-fetchExchangeRates().then(() => {
-  renderCreateProducts();
-  renderDashboard();
-  renderOrdersList();
 });
