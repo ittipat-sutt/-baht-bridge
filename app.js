@@ -1,8 +1,13 @@
 /**
  * BahtBridge — Core Application Logic (app.js)
  * Role: Person 3 (Logic & Data Layer)
- * Compliant with DATA_MODEL.md, HTML_CONTRACT.md, and pricing.js
+ * Compliant with DATA_MODEL.md, HTML_CONTRACT.md, pricing.js, and storage.js
  */
+
+// ─── Storage Service Reference ────────────────────────────────────────────────
+const Storage = typeof StorageService !== 'undefined'
+  ? StorageService
+  : (typeof AppStorage !== 'undefined' ? AppStorage : null);
 
 // ─── Toast / Notification Helper ──────────────────────────────────────────────
 function notify(message, type = 'info') {
@@ -62,7 +67,7 @@ function updateNavActive(screenId) {
   });
 }
 
-function show(id) {
+async function show(id) {
   document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
   const target = document.getElementById(id);
   if (target) {
@@ -70,12 +75,12 @@ function show(id) {
   }
   updateNavActive(id);
 
-  if (id === 'dashboard') renderDashboard();
-  if (id === 'orders') renderOrdersList();
-  if (id === 'profile') renderProfile();
+  if (id === 'dashboard') await renderDashboard();
+  if (id === 'orders') await renderOrdersList();
+  if (id === 'profile') await renderProfile();
 }
 
-// ─── Exchange Rates & Live API Integration ────────────────────────────────────
+// ─── Exchange Rates & Live API (Temporary Cache Allowed in localStorage) ─────
 const FALLBACK_RATES = { USD: 33.0, JPY: 0.22, KRW: 0.025, CNY: 4.55, EUR: 36.2 };
 let exchangeRates = { ...FALLBACK_RATES };
 let ratesLastFetched = null;
@@ -148,209 +153,6 @@ const countryInfo = {
 };
 const productIcons = ['👟', '🧸', '👕', '🎧', '⌚', '🎒', '🕶️', '💻'];
 
-// ─── LocalStorage Persistence & Settings ──────────────────────────────────────
-const ORDERS_STORAGE_KEY = 'bahtbridge_orders_data';
-const SETTINGS_STORAGE_KEY = 'bahtbridge_settings';
-
-function getSettings() {
-  const defaults = {
-    nextOrderNo: 3,
-    defaultShipping: 150,
-    serviceFeeType: 'fixed', // 'fixed' | 'percent'
-    serviceFeeValue: 100,
-    rateMarkupPercent: 0,
-  };
-  try {
-    const raw = localStorage.getItem(SETTINGS_STORAGE_KEY);
-    if (raw) {
-      return Object.assign(defaults, JSON.parse(raw));
-    }
-  } catch (e) {
-    console.error('Error reading settings', e);
-  }
-  return defaults;
-}
-
-function saveSettings(settings) {
-  try {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-  } catch (e) {
-    console.error('Error saving settings', e);
-  }
-}
-
-function getNextOrderId(orders) {
-  const settings = getSettings();
-  let maxNum = 0;
-  (orders || []).forEach((o) => {
-    const m = o.id && String(o.id).match(/\d+/);
-    if (m) {
-      const num = parseInt(m[0], 10);
-      if (num > maxNum) maxNum = num;
-    }
-  });
-
-  let nextNo = settings.nextOrderNo || (maxNum + 1) || 1;
-  if (nextNo <= maxNum) {
-    nextNo = maxNum + 1;
-  }
-  settings.nextOrderNo = nextNo + 1;
-  saveSettings(settings);
-
-  return `#BR${String(nextNo).padStart(3, '0')}`;
-}
-
-const defaultOrders = [
-  {
-    id: '#BR001',
-    customerName: 'คุณปิยะ วัฒนะ',
-    customerPhone: '081-234-5678',
-    customerAddress: 'LINE: @piya',
-    createdAt: '2026-09-24T08:00:00.000Z',
-    dateFormatted: '24 ก.ย. 2569',
-    date: '24 ก.ย. 2569',
-    status: 'กำลังดำเนินการ',
-    orderStatus: 'pending',
-    paymentStatus: 'unpaid',
-    ratesSnapshot: { USD: 33.0, JPY: 0.22, KRW: 0.025, CNY: 4.55, EUR: 36.2 },
-    ratesAt: '2026-09-24T08:00:00.000Z',
-    rateSource: 'fallback',
-    shipping: 150,
-    shippingFee: 150,
-    fee: 100,
-    serviceFee: 100,
-    feeType: 'fixed',
-    feeValue: 100,
-    goodsThb: 3500,
-    goodsTotal: 3500,
-    totalThb: 3750,
-    grandTotal: 3750,
-    items: [
-      { name: 'Shoes', currency: 'USD', amount: 50, originalPrice: 50, quantity: 1, exchangeRate: 33.0 },
-      { name: 'Figure', currency: 'JPY', amount: 5000, originalPrice: 5000, quantity: 1, exchangeRate: 0.22 },
-      { name: 'Shirt', currency: 'KRW', amount: 30000, originalPrice: 30000, quantity: 1, exchangeRate: 0.025 },
-    ],
-  },
-  {
-    id: '#BR002',
-    customerName: 'คุณนิดา เกียรติสกุล',
-    customerPhone: '089-876-5432',
-    customerAddress: 'IG: @nida_shop',
-    createdAt: '2026-09-23T10:30:00.000Z',
-    dateFormatted: '23 ก.ย. 2569',
-    date: '23 ก.ย. 2569',
-    status: 'ยืนยันแล้ว',
-    orderStatus: 'completed',
-    paymentStatus: 'paid',
-    ratesSnapshot: { USD: 33.0, JPY: 0.22, KRW: 0.025, CNY: 4.55, EUR: 36.2 },
-    ratesAt: '2026-09-23T10:30:00.000Z',
-    rateSource: 'fallback',
-    shipping: 110,
-    shippingFee: 110,
-    fee: 100,
-    serviceFee: 100,
-    feeType: 'fixed',
-    feeValue: 100,
-    goodsThb: 1980,
-    goodsTotal: 1980,
-    totalThb: 2190,
-    grandTotal: 2190,
-    items: [
-      { name: 'Headphone', currency: 'USD', amount: 60, originalPrice: 60, quantity: 1, exchangeRate: 33.0 },
-    ],
-  },
-];
-
-// Migration for existing/legacy orders without snapshots
-function migrateOrders(orders) {
-  let hasChange = false;
-  const nowIso = new Date().toISOString();
-
-  orders.forEach((o) => {
-    if (!o.createdAt) {
-      o.createdAt = nowIso;
-      hasChange = true;
-    }
-    if (!o.dateFormatted) {
-      o.dateFormatted = o.date && !o.date.includes('วันนี้') && !o.date.includes('เมื่อวาน')
-        ? o.date
-        : formatThaiDate(o.createdAt);
-      hasChange = true;
-    }
-    if (!o.date) {
-      o.date = o.dateFormatted;
-      hasChange = true;
-    }
-
-    // Ensure locked rate snapshot exists
-    if (!o.ratesSnapshot) {
-      const snap = { ...FALLBACK_RATES };
-      if (Array.isArray(o.items)) {
-        o.items.forEach((item) => {
-          if (item.currency && item.exchangeRate) {
-            snap[item.currency] = Number(item.exchangeRate);
-          }
-        });
-      }
-      o.ratesSnapshot = snap;
-      o.ratesAt = o.createdAt || nowIso;
-      o.rateSource = 'fallback';
-      hasChange = true;
-    }
-
-    if (Array.isArray(o.items)) {
-      o.items.forEach((item) => {
-        if (item.amount === undefined && item.originalPrice !== undefined) {
-          item.amount = item.originalPrice;
-          hasChange = true;
-        }
-        if (item.originalPrice === undefined && item.amount !== undefined) {
-          item.originalPrice = item.amount;
-          hasChange = true;
-        }
-      });
-    }
-
-    // Ensure goodsThb and totalThb are calculated from ratesSnapshot
-    if (typeof Pricing !== 'undefined' && (o.goodsThb === undefined || o.totalThb === undefined)) {
-      const totals = Pricing.calcOrderTotals(o);
-      o.goodsThb = o.goodsTotal !== undefined ? o.goodsTotal : totals.goodsThb;
-      o.totalThb = o.grandTotal !== undefined ? o.grandTotal : (o.total !== undefined ? o.total : totals.totalThb);
-      o.goodsTotal = o.goodsThb;
-      o.grandTotal = o.totalThb;
-      hasChange = true;
-    }
-  });
-
-  if (hasChange) {
-    saveOrdersToStorage(orders);
-  }
-  return orders;
-}
-
-function getStoredOrders() {
-  try {
-    const raw = localStorage.getItem(ORDERS_STORAGE_KEY);
-    if (!raw) {
-      localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(defaultOrders));
-      return defaultOrders;
-    }
-    const parsed = JSON.parse(raw);
-    return migrateOrders(Array.isArray(parsed) ? parsed : defaultOrders);
-  } catch (e) {
-    console.error('Error reading localStorage', e);
-    return defaultOrders;
-  }
-}
-
-function saveOrdersToStorage(orders) {
-  try {
-    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
-  } catch (e) {
-    console.error('Error saving to localStorage', e);
-  }
-}
-
 // ─── Draft Products in Create Form ────────────────────────────────────────────
 let draftProducts = [];
 let activeViewingOrder = null;
@@ -358,8 +160,8 @@ let activeViewingOrder = null;
 const money = (amount) => `฿ ${Number(amount || 0).toLocaleString('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 // Live Order Summary Calculation in Create Screen
-function renderCreateSummary() {
-  const settings = getSettings();
+async function renderCreateSummary() {
+  const settings = await Storage.getSettings();
   const shippingInput = document.getElementById('order-shipping');
   const feeInput = document.getElementById('order-fee');
 
@@ -384,12 +186,12 @@ function renderCreateSummary() {
 }
 
 // Render Draft Products in Create Screen
-function renderCreateProducts() {
+async function renderCreateProducts() {
   const container = document.getElementById('mini-products-list');
   if (!container) return;
   container.innerHTML = '';
 
-  const settings = getSettings();
+  const settings = await Storage.getSettings();
   const snapshot = Pricing.lockRates(exchangeRates, settings.rateMarkupPercent || 0);
 
   draftProducts.forEach((product, index) => {
@@ -414,19 +216,18 @@ function renderCreateProducts() {
     container.appendChild(card);
   });
 
-  renderCreateSummary();
+  await renderCreateSummary();
 }
 
-function deleteDraftProduct(index) {
+async function deleteDraftProduct(index) {
   draftProducts.splice(index, 1);
-  renderCreateProducts();
+  await renderCreateProducts();
 }
 
 // ─── Setup Form (Direct Select, Dynamic Fees) ─────────────────────────────────
-function setupOrderForm() {
-  const settings = getSettings();
+async function setupOrderForm() {
+  const settings = await Storage.getSettings();
 
-  // Initialize dynamic shipping and fee inputs from settings
   const shippingInput = document.getElementById('order-shipping');
   const feeInput = document.getElementById('order-fee');
   if (shippingInput && !shippingInput.value) {
@@ -450,7 +251,7 @@ function setupOrderForm() {
 
   const addBtn = document.getElementById('btn-add-product');
   if (addBtn) {
-    addBtn.onclick = () => {
+    addBtn.onclick = async () => {
       const nameInput = document.getElementById('product-name');
       const priceInput = document.getElementById('product-price');
       const qtyInput = document.getElementById('product-qty');
@@ -481,7 +282,7 @@ function setupOrderForm() {
       nameInput.value = '';
       priceInput.value = '';
       qtyInput.value = '1';
-      renderCreateProducts();
+      await renderCreateProducts();
     };
   }
 }
@@ -509,14 +310,14 @@ async function calculateOrder() {
     calcBtn.textContent = 'กำลังคำนวณ...';
   }
 
-  show('loading');
+  await show('loading');
 
   try {
     await fetchExchangeRates();
   } catch (err) {
     console.error('Error fetching rates:', err);
   } finally {
-    const settings = getSettings();
+    const settings = await Storage.getSettings();
     const ratesSnapshot = Pricing.lockRates(exchangeRates, settings.rateMarkupPercent || 0);
 
     const shippingInput = document.getElementById('order-shipping');
@@ -537,7 +338,7 @@ async function calculateOrder() {
       paymentStatus: 'unpaid',
       ratesSnapshot,
       ratesAt: new Date().toISOString(),
-      rateSource: currentRateSource, // 'api' | 'fallback'
+      rateSource: currentRateSource,
       shipping,
       shippingFee: shipping,
       fee,
@@ -561,7 +362,7 @@ async function calculateOrder() {
 
     populateDetailScreen(activeViewingOrder);
     populateCustomerScreen(activeViewingOrder);
-    show('detail');
+    await show('detail');
 
     if (calcBtn) {
       calcBtn.disabled = false;
@@ -582,7 +383,6 @@ function updateManualRate(currency, newRateVal) {
   activeViewingOrder.ratesSnapshot[currency] = newRate;
   activeViewingOrder.rateSource = 'manual';
 
-  // Recalculate totals
   const totals = Pricing.calcOrderTotals(activeViewingOrder);
   activeViewingOrder.goodsThb = totals.goodsThb;
   activeViewingOrder.totalThb = totals.totalThb;
@@ -651,7 +451,6 @@ function populateDetailScreen(order) {
     }
   }
 
-  // Render items using lines from Pricing.calcOrderTotals (guaranteed sum match!)
   const listEl = document.getElementById('detail-items-list');
   if (listEl) {
     listEl.innerHTML = '';
@@ -671,7 +470,6 @@ function populateDetailScreen(order) {
     });
   }
 
-  // Populate dynamic summary
   const goodsEl = document.getElementById('detail-summary-goods');
   const shipEl = document.getElementById('detail-summary-shipping');
   const feeEl = document.getElementById('detail-summary-fee');
@@ -737,23 +535,17 @@ function populateCustomerScreen(order) {
   if (sumTotal) sumTotal.textContent = money(totals.totalThb);
 }
 
-// ─── Confirm Order & Persist ──────────────────────────────────────────────────
-function confirmCurrentOrder() {
+// ─── Confirm Order & Persist (Via StorageService) ─────────────────────────────
+async function confirmCurrentOrder() {
   if (!activeViewingOrder) return;
 
-  const orders = getStoredOrders();
-
   if (activeViewingOrder.isDraft) {
-    const newId = getNextOrderId(orders);
+    const totals = Pricing.calcOrderTotals(activeViewingOrder);
     const nowIso = new Date().toISOString();
     const thaiDate = formatThaiDate(nowIso);
 
-    // Compute final totals via Pricing
-    const totals = Pricing.calcOrderTotals(activeViewingOrder);
-
-    const newOrder = {
+    const draftToSave = {
       ...activeViewingOrder,
-      id: newId,
       createdAt: nowIso,
       dateFormatted: thaiDate,
       date: thaiDate,
@@ -771,19 +563,18 @@ function confirmCurrentOrder() {
       isDraft: false,
     };
 
-    orders.unshift(newOrder);
-    saveOrdersToStorage(orders);
-    activeViewingOrder = newOrder;
+    const savedOrder = await Storage.saveOrder(draftToSave);
+    activeViewingOrder = savedOrder;
 
     const idEl = document.getElementById('success-order-id');
     const nameEl = document.getElementById('success-customer-name');
     const phoneEl = document.getElementById('success-customer-phone');
     const totalEl = document.getElementById('success-order-total');
 
-    if (idEl) idEl.textContent = newOrder.id;
-    if (nameEl) nameEl.textContent = newOrder.customerName;
-    if (phoneEl) phoneEl.textContent = newOrder.customerPhone;
-    if (totalEl) totalEl.textContent = money(newOrder.totalThb);
+    if (idEl) idEl.textContent = savedOrder.id;
+    if (nameEl) nameEl.textContent = savedOrder.customerName;
+    if (phoneEl) phoneEl.textContent = savedOrder.customerPhone;
+    if (totalEl) totalEl.textContent = money(savedOrder.totalThb);
 
     // Reset draft form
     draftProducts = [];
@@ -793,38 +584,34 @@ function confirmCurrentOrder() {
     if (custName) custName.value = '';
     if (custPhone) custPhone.value = '';
     if (custAddress) custAddress.value = '';
-    renderCreateProducts();
+    await renderCreateProducts();
   } else {
     activeViewingOrder.status = 'ยืนยันแล้ว';
     activeViewingOrder.orderStatus = 'completed';
-    const idx = orders.findIndex((o) => o.id === activeViewingOrder.id);
-    if (idx !== -1) {
-      orders[idx] = activeViewingOrder;
-      saveOrdersToStorage(orders);
-    }
+    activeViewingOrder.paymentStatus = 'paid';
+    await Storage.saveOrder(activeViewingOrder);
   }
 
-  renderDashboard();
-  renderOrdersList();
-  renderProfile();
-  show('success');
+  await renderDashboard();
+  await renderOrdersList();
+  await renderProfile();
+  await show('success');
 }
 
 // View an Order from History (Calculates strictly from order.ratesSnapshot!)
-function viewOrderDetail(orderId) {
-  const orders = getStoredOrders();
-  const found = orders.find((o) => o.id === orderId);
+async function viewOrderDetail(orderId) {
+  const found = await Storage.getOrder(orderId);
   if (!found) return;
 
   activeViewingOrder = { ...found, isDraft: false };
   populateDetailScreen(activeViewingOrder);
   populateCustomerScreen(activeViewingOrder);
-  show('detail');
+  await show('detail');
 }
 
 // ─── Render Dashboard ─────────────────────────────────────────────────────────
-function renderDashboard() {
-  const orders = getStoredOrders();
+async function renderDashboard() {
+  const orders = await Storage.getOrders();
   const totalCount = orders.length;
   const pendingCount = orders.filter((o) => o.status === 'กำลังดำเนินการ' || o.orderStatus === 'pending').length;
   const totalSales = orders.reduce((sum, o) => {
@@ -868,8 +655,8 @@ function renderDashboard() {
 }
 
 // ─── Render Orders List ───────────────────────────────────────────────────────
-function renderOrdersList() {
-  const orders = getStoredOrders();
+async function renderOrdersList() {
+  const orders = await Storage.getOrders();
   const listEl = document.getElementById('orders-list');
   if (!listEl) return;
 
@@ -909,8 +696,8 @@ function renderOrdersList() {
 }
 
 // ─── Render Profile Statistics ────────────────────────────────────────────────
-function renderProfile() {
-  const orders = getStoredOrders();
+async function renderProfile() {
+  const orders = await Storage.getOrders();
   const totalOrders = orders.length;
   const confirmedOrders = orders.filter((o) => o.status === 'ยืนยันแล้ว' || o.orderStatus === 'completed').length;
   const totalSales = orders.reduce((sum, o) => {
@@ -969,26 +756,24 @@ function shareOrderSummary() {
   }
 }
 
-// ─── Backup & Restore ─────────────────────────────────────────────────────────
-function exportOrdersData() {
-  const orders = getStoredOrders();
-  const backup = {
-    version: '1.0',
-    exportedAt: new Date().toISOString(),
-    appName: 'BahtBridge',
-    ordersCount: orders.length,
-    orders: orders,
-  };
-  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  const dateStr = new Date().toISOString().slice(0, 10);
-  a.href = url;
-  a.download = `bahtbridge-backup-${dateStr}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+// ─── Backup & Restore (Via StorageService.exportAll / importAll) ───────────────
+async function exportOrdersData() {
+  try {
+    const backup = await Storage.exportAll();
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const dateStr = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `bahtbridge-backup-${dateStr}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    notify('ส่งออกไฟล์สำรองข้อมูลเรียบร้อยแล้ว', 'success');
+  } catch (err) {
+    notify('เกิดข้อผิดพลาดในการสำรองข้อมูล: ' + err.message, 'error');
+  }
 }
 
 function importOrdersData(event) {
@@ -996,22 +781,18 @@ function importOrdersData(event) {
   if (!file) return;
 
   const reader = new FileReader();
-  reader.onload = (e) => {
+  reader.onload = async (e) => {
     try {
       const data = JSON.parse(e.target.result);
-      if (!data || !Array.isArray(data.orders)) {
-        notify('รูปแบบไฟล์ไม่ถูกต้อง: ต้องเป็นไฟล์สำรองข้อมูลของ BahtBridge (JSON)', 'error');
-        return;
-      }
-      if (confirm(`พบข้อมูลออเดอร์ ${data.orders.length} รายการ คุณต้องการนำเข้าข้อมูลนี้ทับข้อมูลปัจจุบันหรือไม่?`)) {
-        saveOrdersToStorage(data.orders);
-        renderDashboard();
-        renderOrdersList();
-        renderProfile();
-        notify(`นำเข้าข้อมูลสำเร็จ! โหลดออเดอร์แล้ว ${data.orders.length} รายการ`, 'success');
+      if (confirm(`พบข้อมูลออเดอร์ ${data.orders ? data.orders.length : 0} รายการ คุณต้องการนำเข้าข้อมูลนี้ทับข้อมูลปัจจุบันหรือไม่?`)) {
+        const res = await Storage.importAll(data, { mode: 'replace' });
+        await renderDashboard();
+        await renderOrdersList();
+        await renderProfile();
+        notify(`นำเข้าข้อมูลสำเร็จ! โหลดออเดอร์แล้ว ${res.imported} รายการ`, 'success');
       }
     } catch (err) {
-      notify('เกิดข้อผิดพลาดในการอ่านไฟล์สำรอง: ' + err.message, 'error');
+      notify('เกิดข้อผิดพลาดในการนำเข้าไฟล์สำรอง: ' + err.message, 'error');
     }
   };
   reader.readAsText(file);
@@ -1019,18 +800,18 @@ function importOrdersData(event) {
 }
 
 // ─── Initialize Application ───────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  setupOrderForm();
-  renderCreateProducts();
-  renderDashboard();
-  renderOrdersList();
-  renderProfile();
+document.addEventListener('DOMContentLoaded', async () => {
+  await setupOrderForm();
+  await renderCreateProducts();
+  await renderDashboard();
+  await renderOrdersList();
+  await renderProfile();
   checkCapacitorEnvironment();
 
-  fetchExchangeRates().then(() => {
-    renderCreateProducts();
-    renderDashboard();
-    renderOrdersList();
-    renderProfile();
+  fetchExchangeRates().then(async () => {
+    await renderCreateProducts();
+    await renderDashboard();
+    await renderOrdersList();
+    await renderProfile();
   });
 });
