@@ -4,3 +4,506 @@
 
 /* Action bars are part of the page flow, so they never cover order content. */
 .sticky{position:static;margin-top:16px;padding:0;background:transparent;z-index:auto}
+
+
+/* ==========================================================================
+   2A: Base CSS & UI Components (Branch: feature/ui-components)
+   ========================================================================== */
+
+/* 1. Hover, Active & Focus-Visible States */
+button, .primary, .secondary, .outline, .float-add, .nav, .back, .link, .order, .mini-product, .stat {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.primary:active, .secondary:active, .outline:active {
+  transform: scale(0.98);
+}
+.primary:active {
+  background: #1771c5;
+}
+.secondary:active {
+  background: #c8e2fb;
+}
+.outline:active {
+  background: #eaf2fb;
+}
+.order:active {
+  transform: scale(0.99);
+}
+.nav:active {
+  transform: scale(0.92);
+}
+.back:active {
+  transform: translateX(-3px) scale(0.92);
+}
+.float-add:active {
+  transform: scale(0.96);
+}
+
+button:focus-visible, .primary:focus-visible, .secondary:focus-visible, .outline:focus-visible, .nav:focus-visible, .input:focus-visible, .back:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+}
+
+/* Apply hover effects only on pointer devices that support hover */
+@media (hover: hover) {
+  .primary:hover {
+    background: #1b74cb;
+    box-shadow: 0 10px 22px #2389ec55;
+    transform: translateY(-1px);
+  }
+  .secondary:hover {
+    background: #d5eaff;
+    color: #166fc4;
+    transform: translateY(-1px);
+  }
+  .outline:hover {
+    background: #f4f8fd;
+    border-color: #a6c7ec;
+    color: var(--navy);
+    transform: translateY(-1px);
+  }
+  .order {
+    cursor: pointer;
+  }
+  .order:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(16, 45, 92, 0.08);
+    border-color: #d0e0f2;
+  }
+  .mini-product:hover {
+    border-color: #b8d7f7;
+    background: #f2f7ff;
+  }
+  .stat:hover {
+    border-color: #dbe5f0;
+    box-shadow: 0 6px 16px rgba(16, 45, 92, 0.05);
+  }
+  .nav:hover {
+    color: var(--blue);
+  }
+  .back:hover {
+    background: #e4ecf7;
+    color: var(--blue);
+    transform: translateX(-2px);
+  }
+  .link:hover {
+    color: #176dc4;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+  .float-add:hover {
+    box-shadow: 0 12px 26px #2389ec60;
+    transform: translateY(-2px);
+  }
+}
+
+button:disabled, .primary:disabled, .secondary:disabled, .outline:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* 2. Mobile Fixes, Viewport, Safe-Area & Touch Targets */
+.primary, .secondary, .outline {
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav {
+  min-height: 44px;
+  min-width: 44px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.back {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: 50%;
+  user-select: none;
+}
+.input, select.input {
+  min-height: 44px;
+}
+
+/* Frame-safe float-add positioning */
+.float-add {
+  position: absolute;
+  bottom: calc(78px + env(safe-area-inset-bottom, 0px));
+  right: 20px;
+  z-index: 25;
+}
+
+@supports (height: 100dvh) {
+  .phone {
+    height: min(844px, calc(100dvh - 56px));
+  }
+}
+
+@media (max-width: 480px) {
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+  .shell {
+    padding: 0;
+    display: block;
+    height: 100%;
+  }
+  .phone {
+    width: 100%;
+    height: 100dvh;
+    min-height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .screen {
+    padding-top: calc(18px + env(safe-area-inset-top, 0px));
+    padding-left: calc(18px + env(safe-area-inset-left, 0px));
+    padding-right: calc(18px + env(safe-area-inset-right, 0px));
+    padding-bottom: max(110px, calc(95px + env(safe-area-inset-bottom, 24px)));
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-y: contain;
+  }
+  .bottom {
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    background: rgba(255, 255, 255, 0.94);
+  }
+  .float-add {
+    bottom: calc(80px + env(safe-area-inset-bottom, 0px));
+    right: 18px;
+  }
+  .input, select.input {
+    font-size: 16px;
+  }
+}
+
+/* 3. Toast Notification Styles */
+#toast-root {
+  position: absolute;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 32px);
+  max-width: 350px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 1000;
+  pointer-events: none;
+}
+
+.toast {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+  background: var(--navy);
+  box-shadow: 0 10px 25px rgba(16, 45, 92, 0.22);
+  animation: toast-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  user-select: none;
+}
+
+.toast-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.22);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.toast-text {
+  flex: 1;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.toast.toast-success {
+  background: linear-gradient(135deg, #0d7f4f, #16a36a);
+  border: 1px solid #34c489;
+}
+
+.toast.toast-error {
+  background: linear-gradient(135deg, #c43239, #df4c53);
+  border: 1px solid #f27278;
+}
+
+.toast.toast-info {
+  background: linear-gradient(135deg, #1664b4, #2389ec);
+  border: 1px solid #62aaf7;
+}
+
+.toast.toast-out {
+  opacity: 0;
+  transform: translateY(-8px) scale(0.96);
+  pointer-events: none;
+}
+
+@keyframes toast-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* 4. Skeleton Loading Styles */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #e5edf5;
+  border-radius: 8px;
+}
+
+.skeleton::after {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 1.6s infinite ease-in-out;
+  content: "";
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.skeleton-text {
+  height: 14px;
+  margin: 6px 0;
+  border-radius: 6px;
+}
+.skeleton-text.short {
+  width: 40%;
+}
+.skeleton-text.medium {
+  width: 70%;
+}
+.skeleton-text.long {
+  width: 90%;
+}
+
+.skeleton-avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.skeleton-card {
+  height: 74px;
+  border-radius: 17px;
+  margin-bottom: 10px;
+  border: 1px solid var(--line);
+}
+
+/* 5. Empty State Styles */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 42px 20px;
+  background: #ffffff;
+  border: 1px dashed #d5e2f0;
+  border-radius: 20px;
+  margin: 16px 0;
+  min-height: 220px;
+}
+
+.empty-icon {
+  width: 68px;
+  height: 68px;
+  border-radius: 24px;
+  background: #edf5fe;
+  color: var(--blue);
+  display: grid;
+  place-items: center;
+  font-size: 32px;
+  margin-bottom: 14px;
+  box-shadow: 0 8px 18px rgba(35, 137, 236, 0.12);
+}
+
+.empty-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0 0 6px;
+  letter-spacing: -0.3px;
+}
+
+.empty-desc {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 16px;
+  max-width: 250px;
+}
+
+.empty-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 12px;
+  background: var(--sky);
+  color: var(--blue);
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* 6. Utility Class: .hidden */
+.hidden {
+  display: none !important;
+}
+
+/* 7. Bottom Sheet & Modal Dialogs for ui.js */
+.screen.sheet-locked {
+  overflow: hidden !important;
+  touch-action: none;
+}
+
+.sheet {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+}
+.sheet.active, .sheet.open {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: auto;
+}
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 45, 92, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  animation: fade-in 0.25s ease forwards;
+}
+.sheet-content {
+  position: relative;
+  background: #ffffff;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 16px));
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 -10px 30px rgba(16, 45, 92, 0.15);
+  animation: sheet-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 1;
+}
+.sheet-handle {
+  width: 36px;
+  height: 4px;
+  background: #d4e0ee;
+  border-radius: 2px;
+  margin: 0 auto 16px;
+}
+
+.modal-backdrop {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 45, 92, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 500;
+  place-items: center;
+  padding: 24px;
+}
+.modal-backdrop.active {
+  display: grid;
+  animation: fade-in 0.2s ease forwards;
+}
+.modal-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 24px;
+  width: 100%;
+  max-width: 320px;
+  box-shadow: 0 16px 36px rgba(16, 45, 92, 0.2);
+  animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.modal-body {
+  font-size: 14px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0 0 20px;
+}
+.modal-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes sheet-slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes modal-pop {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Respect Reduced Motion Preferences */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .skeleton::after {
+    animation: none !important;
+  }
+}
