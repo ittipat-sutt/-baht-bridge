@@ -506,3 +506,528 @@ button:disabled, .primary:disabled, .secondary:disabled, .outline:disabled {
     animation: none !important;
   }
 }
+
+
+/* ==========================================================================
+   2B: New UI Components CSS (Branch: feature/ui-status-css)
+   Complies with DATA_MODEL.md & HTML_CONTRACT.md
+   ========================================================================== */
+
+/* 1. Status Badges with data-status (Fulfillment & Payment) */
+.badge, .tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  line-height: 1.2;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.badge::before, .tag::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+/* 1.1 fulfillmentStatus (8 values) */
+.badge[data-status="draft"], .tag[data-status="draft"] {
+  background: #f1f5f9;
+  color: #475569;
+  border: 1px solid #cbd5e1;
+}
+.badge[data-status="pending_purchase"], .tag[data-status="pending_purchase"] {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+.badge[data-status="purchased"], .tag[data-status="purchased"] {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+.badge[data-status="shipping_intl"], .tag[data-status="shipping_intl"] {
+  background: #f5f3ff;
+  color: #6d28d9;
+  border: 1px solid #ddd6fe;
+}
+.badge[data-status="arrived_th"], .tag[data-status="arrived_th"] {
+  background: #ecfeff;
+  color: #0e7490;
+  border: 1px solid #a5f3fc;
+}
+.badge[data-status="shipping_th"], .tag[data-status="shipping_th"] {
+  background: #eef2ff;
+  color: #4338ca;
+  border: 1px solid #c7d2fe;
+}
+.badge[data-status="completed"], .tag[data-status="completed"] {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #bbf7d0;
+}
+.badge[data-status="cancelled"], .tag[data-status="cancelled"] {
+  background: #fef2f2;
+  color: #b91c1c;
+  border: 1px solid #fecaca;
+}
+
+/* 1.2 paymentStatus (4 values) */
+.badge[data-payment="unpaid"], .tag[data-payment="unpaid"] {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fecdd3;
+}
+.badge[data-payment="deposit"], .tag[data-payment="deposit"] {
+  background: #fefce8;
+  color: #a16207;
+  border: 1px solid #fef08a;
+}
+.badge[data-payment="paid"], .tag[data-payment="paid"] {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+.badge[data-payment="refunded"], .tag[data-payment="refunded"] {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+/* 2. Chips & #status-filter Bar */
+#status-filter {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 6px 2px 14px;
+  margin-bottom: 8px;
+}
+#status-filter::-webkit-scrollbar {
+  display: none;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  user-select: none;
+  min-height: 40px;
+}
+.chip:hover {
+  border-color: #cbd5e1;
+  color: var(--ink);
+}
+.chip.active {
+  background: var(--navy);
+  color: #ffffff;
+  border-color: var(--navy);
+  box-shadow: 0 4px 12px rgba(16, 45, 92, 0.18);
+}
+.chip-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 10px;
+  background: #e2e8f0;
+  color: var(--navy);
+}
+.chip.active .chip-count {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* 3. Bottom Sheet enhancements */
+.sheet {
+  position: absolute;
+  inset: 0;
+  z-index: 300;
+  display: none;
+}
+.sheet.active, .sheet.open {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+}
+.sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 45, 92, 0.5);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  animation: fade-in 0.25s ease forwards;
+}
+.sheet-content {
+  position: relative;
+  background: #ffffff;
+  border-radius: 24px 24px 0 0;
+  padding: 20px 20px calc(24px + env(safe-area-inset-bottom, 20px));
+  max-height: 85vh;
+  overflow-y: auto;
+  box-shadow: 0 -12px 36px rgba(16, 45, 92, 0.2);
+  animation: sheet-slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 1;
+}
+.sheet-handle {
+  width: 40px;
+  height: 5px;
+  border-radius: 3px;
+  background: #cbd5e1;
+  margin: 0 auto 16px;
+  flex-shrink: 0;
+}
+.sheet-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* 4. Stepper: 8-Step Progress for fulfillmentStatus */
+.stepper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  position: relative;
+  margin: 24px 0 16px;
+  padding: 0 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.stepper::-webkit-scrollbar {
+  display: none;
+}
+.stepper::before {
+  content: "";
+  position: absolute;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  height: 3px;
+  background: #e2e8f0;
+  z-index: 0;
+}
+.step {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  min-width: 44px;
+}
+.step-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #e2e8f0;
+  color: #94a3b8;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  transition: all 0.25s ease;
+}
+.step-label {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-top: 6px;
+  line-height: 1.2;
+  max-width: 50px;
+}
+.step.completed .step-icon {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+}
+.step.completed .step-label {
+  color: var(--navy);
+}
+.step.active .step-icon {
+  background: #ffffff;
+  border-color: var(--blue);
+  color: var(--blue);
+  box-shadow: 0 0 0 4px rgba(35, 137, 236, 0.2);
+  transform: scale(1.15);
+}
+.step.active .step-label {
+  color: var(--blue);
+  font-weight: 700;
+}
+.step.cancelled .step-icon {
+  background: #fef2f2;
+  border-color: var(--red);
+  color: var(--red);
+}
+
+/* 5. Vertical Timeline #history-list */
+#history-list, .timeline {
+  position: relative;
+  padding-left: 28px;
+  margin: 16px 0;
+}
+#history-list::before, .timeline::before {
+  content: "";
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  bottom: 8px;
+  width: 2px;
+  background: #e2e8f0;
+}
+.timeline-item, .history-item {
+  position: relative;
+  margin-bottom: 18px;
+}
+.timeline-dot {
+  position: absolute;
+  left: -28px;
+  top: 3px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid var(--blue);
+  box-shadow: 0 0 0 2px rgba(35, 137, 236, 0.15);
+}
+.timeline-time {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+.timeline-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--navy);
+}
+.timeline-desc {
+  font-size: 12px;
+  color: #475569;
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* 6. Payment, Shipment, Tracking & Item Status */
+.payment-card, .payment-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.shipment-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 14px;
+  margin-bottom: 10px;
+}
+.tracking-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 8px;
+  background: #f1f5f9;
+  padding: 8px 12px;
+  border-radius: 10px;
+}
+.tracking-number {
+  font-family: monospace;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  letter-spacing: 0.5px;
+}
+.btn-copy-tracking, .btn-copy {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--navy);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  transition: all 0.2s ease;
+}
+.btn-copy-tracking:hover, .btn-copy:hover {
+  background: #f8fafc;
+  border-color: #94a3b8;
+}
+
+.item-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+.item-status[data-status="to_buy"] {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+.item-status[data-status="bought"] {
+  background: #dbeafe;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+.item-status[data-status="out_of_stock"] {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+.item-status[data-status="substituted"] {
+  background: #f3e8ff;
+  color: #6b21a8;
+  border: 1px solid #e9d5ff;
+}
+
+/* 7. Form Error Styles */
+.field.error input, .field.error select {
+  border-color: var(--red) !important;
+  background: #fff5f5 !important;
+}
+.field.error input:focus, .field.error select:focus {
+  outline-color: var(--red) !important;
+  box-shadow: 0 0 0 3px rgba(223, 76, 83, 0.15) !important;
+}
+.field-error {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--red);
+  margin-top: 5px;
+  animation: error-shake 0.3s ease;
+}
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* 8. Auth/Login & #sync-indicator */
+#sync-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+}
+#sync-indicator::before {
+  content: "";
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+#sync-indicator.synced {
+  background: #f0fdf4;
+  color: #166534;
+  border: 1px solid #bbf7d0;
+}
+#sync-indicator.syncing {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+#sync-indicator.offline {
+  background: #fefce8;
+  color: #854d0e;
+  border: 1px solid #fef08a;
+}
+#sync-indicator.error {
+  background: #fef2f2;
+  color: #991b1b;
+  border: 1px solid #fecaca;
+}
+
+.auth-card {
+  background: #ffffff;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 24px 20px;
+  margin-top: 16px;
+}
+
+/* 9. Danger Button System */
+.danger, button.danger {
+  background: var(--red);
+  color: #ffffff;
+  border: none;
+  border-radius: 14px;
+  padding: 14px 16px;
+  width: 100%;
+  font: 600 15px inherit;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 6px 18px rgba(223, 76, 83, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+}
+.danger:hover {
+  background: #c93d43;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 22px rgba(223, 76, 83, 0.35);
+}
+.danger:active {
+  transform: scale(0.98);
+  background: #b03238;
+}
+.outline.danger {
+  background: #ffffff;
+  border: 1px solid var(--red);
+  color: var(--red);
+  box-shadow: none;
+}
+.outline.danger:hover {
+  background: #fff5f5;
+  border-color: #c93d43;
+}
