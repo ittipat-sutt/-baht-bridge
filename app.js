@@ -110,6 +110,36 @@ if (typeof window !== 'undefined') {
   window.switchAuthTab = switchAuthTab;
 }
 
+// ─── Auth Guard: ตรวจสอบสิทธิ์การเข้าสู่ระบบก่อนทำการแก้ไข ───────────────────
+function isUserLoggedIn() {
+  if (typeof window !== 'undefined') {
+    if (window.FirebaseDB && typeof window.FirebaseDB.getCurrentUser === 'function') {
+      const user = window.FirebaseDB.getCurrentUser();
+      if (user) return true;
+    }
+    if (window.AuthService && typeof window.AuthService.getUser === 'function') {
+      const user = window.AuthService.getUser();
+      if (user) return true;
+    }
+  }
+  return false;
+}
+
+function requireAuth(actionName = 'ทำการแก้ไขข้อมูล') {
+  if (isUserLoggedIn()) return true;
+
+  notify(`🔒 กรุณาเข้าสู่ระบบก่อน${actionName}`, 'warning');
+  if (typeof window !== 'undefined' && typeof window.show === 'function') {
+    setTimeout(() => window.show('login'), 350);
+  }
+  return false;
+}
+
+if (typeof window !== 'undefined') {
+  window.isUserLoggedIn = isUserLoggedIn;
+  window.requireAuth = requireAuth;
+}
+
 async function show(id) {
   document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
   const target = document.getElementById(id);
@@ -620,6 +650,7 @@ function populateCustomerScreen(order) {
 // ─── Confirm Order & Persist (Via StorageService) ─────────────────────────────
 async function confirmCurrentOrder() {
   if (!activeViewingOrder) return;
+  if (!requireAuth('สร้างหรือยืนยันออเดอร์')) return;
 
   if (activeViewingOrder.isDraft) {
     const totals = Pricing.calcOrderTotals(activeViewingOrder);
@@ -694,6 +725,7 @@ async function viewOrderDetail(orderId) {
 // ─── Cancel Order ──────────────────────────────────────────────────────────────
 async function cancelCurrentOrder() {
   if (!activeViewingOrder || activeViewingOrder.isDraft) return;
+  if (!requireAuth('ยกเลิกออเดอร์')) return;
   if (activeViewingOrder.fulfillmentStatus === 'cancelled') {
     notify('ออเดอร์นี้ถูกยกเลิกแล้ว', 'info');
     return;

@@ -118,6 +118,7 @@
         btn.style.opacity = '0.4';
       } else {
         btn.onclick = async () => {
+          if (window.requireAuth && !window.requireAuth('เปลี่ยนสถานะออเดอร์')) return;
           UI.closeSheet('status-sheet');
           if (transitionCheck.requiresConfirmation) {
             const confirmed = await UI.confirmDialog(transitionCheck.reason || `ยืนยันการเปลี่ยนสถานะเป็น "${label}" ใช่หรือไม่?`);
@@ -418,6 +419,7 @@
     const submitPayBtn = container.querySelector('#btn-submit-payment');
     if (submitPayBtn) {
       submitPayBtn.onclick = async () => {
+        if (window.requireAuth && !window.requireAuth('บันทึกการชำระเงิน')) return;
         const amtInput = container.querySelector('#pay-amount-input');
         const noteInput = container.querySelector('#pay-note-input');
         const amt = Number(amtInput?.value);
@@ -443,6 +445,7 @@
     const submitShipBtn = container.querySelector('#btn-submit-shipment');
     if (submitShipBtn) {
       submitShipBtn.onclick = async () => {
+        if (window.requireAuth && !window.requireAuth('เพิ่มข้อมูลพัสดุ')) return;
         const carrierSelect = container.querySelector('#ship-carrier-select');
         const trackingInput = container.querySelector('#ship-tracking-input');
         const trackingNo = (trackingInput?.value || '').trim();
@@ -500,6 +503,7 @@
 
       statusBadge.querySelector('button').onclick = async (e) => {
         e.stopPropagation();
+        if (window.requireAuth && !window.requireAuth('เปลี่ยนสถานะสินค้า')) return;
         const cycle = ['to_buy', 'bought', 'out_of_stock', 'substituted'];
         const nextSt = cycle[(cycle.indexOf(st) + 1) % cycle.length];
 
@@ -626,6 +630,7 @@
   // ─── Helper Actions Attached to Window ──────────────────────────────────────
 
   async function removeShipmentClick(orderId, shipmentId) {
+    if (window.requireAuth && !window.requireAuth('ลบข้อมูลพัสดุ')) return;
     const confirmed = await UI.confirmDialog('ต้องการลบรายการพัสดุนี้ใช่หรือไม่?');
     if (!confirmed) return;
 

@@ -125,6 +125,7 @@
    * Read form inputs, validate, and persist via StorageService.
    */
   async function saveSettings() {
+    if (typeof window !== 'undefined' && window.requireAuth && !window.requireAuth('บันทึกการตั้งค่า')) return false;
     const storage = getStorage();
     if (!storage || typeof document === 'undefined') return;
 

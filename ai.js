@@ -18,9 +18,9 @@
   // รายชื่อโมเดลเรียงตามลำดับ (Auto-Fallback เมื่อโมเดลใดติด Rate-limit หรือ High Demand)
   const CANDIDATE_MODELS = [
     'gemini-2.5-flash',
-    'gemini-2.5-pro',
-    'gemini-3.8-flash',
-    'gemini-1.5-flash',
+    'gemini-flash-latest',
+    'gemini-2.5-flash-lite',
+    'gemini-3.5-flash',
   ];
 
   // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -185,7 +185,11 @@
 
     // รวม items ทั้งหมดที่มีในออเดอร์ (เฉพาะสถานะ pending/confirmed หรือทั้งหมด)
     const allItems = [];
-    orders.forEach(o => {
+    // คัดกรองออเดอร์ที่ยังไม่ถูกยกเลิก
+    const validOrders = orders.filter(o => o.fulfillmentStatus !== 'cancelled');
+    const targetOrders = validOrders.length > 0 ? validOrders : orders;
+
+    targetOrders.forEach(o => {
       const orderId = o.id || 'N/A';
       const custName = o.customerName || 'ไม่ระบุชื่อ';
       (o.items || []).forEach(it => {
@@ -201,7 +205,7 @@
     });
 
     if (allItems.length === 0) {
-      throw new Error('ไม่มีรายการสินค้าในระบบที่จะนำมาจัดกลุ่ม');
+      throw new Error('ยังไม่มีรายการสินค้าในระบบที่จะนำมาจัดกลุ่ม กรุณาสร้างออเดอร์ก่อนใช้งาน');
     }
 
     const itemsSummary = JSON.stringify(allItems);
@@ -231,36 +235,91 @@ ${itemsSummary}
   }
 ]`;
 
-    const raw = await callGemini(prompt, { json: true });
-    console.log('🤖 [Gemini Shopping Trip Response]:', raw);
-
-    // Clean markdown code blocks if present (```json ... ```)
-    const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
-
     try {
-      // First try direct parse
-      const parsed = JSON.parse(cleaned);
-      if (Array.isArray(parsed)) return parsed;
-      if (Array.isArray(parsed.stores)) return parsed.stores;
-      if (Array.isArray(parsed.trips)) return parsed.trips;
-      if (Array.isArray(parsed.items)) return parsed.items;
-      return [parsed];
-    } catch (_) {
-      // Second try: extract array bracket [...]
-      const match = cleaned.match(/\[[\s\S]*\]/);
-      if (match) {
-        return JSON.parse(match[0]);
+      if (isConfigured()) {
+        const raw = await callGemini(prompt, { json: true });
+        console.log('🤖 [Gemini Shopping Trip Response]:', raw);
+
+        // Clean markdown code blocks if present (```json ... ```)
+        const cleaned = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+        // First try direct parse
+        const parsed = JSON.parse(cleaned);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed.stores) && parsed.stores.length > 0) return parsed.stores;
+        if (Array.isArray(parsed.trips) && parsed.trips.length > 0) return parsed.trips;
+        if (Array.isArray(parsed.items) && parsed.items.length > 0) return parsed.items;
       }
-      // Third try: if model returned an object with stores/items key { "stores": [...] }
-      const objMatch = cleaned.match(/\{[\s\S]*\}/);
-      if (objMatch) {
-        const parsedObj = JSON.parse(objMatch[0]);
-        if (Array.isArray(parsedObj.stores)) return parsedObj.stores;
-        if (Array.isArray(parsedObj.trips)) return parsedObj.trips;
-        if (Array.isArray(parsedObj.data)) return parsedObj.data;
-      }
-      throw new Error('AI ตอบกลับด้วยข้อความที่ไม่ตรงรูปแบบ JSON');
+    } catch (aiErr) {
+      console.warn('⚠️ [AI Shopping Trip] Falling back to smart rule-based grouping:', aiErr.message);
     }
+
+    // Fallback: ใช้ Smart Rule-Based Grouping จัดกลุ่มตามสกุลเงินและประเภทสินค้าอัตโนมัติ
+    return fallbackGroupShoppingTrip(allItems);
+  }
+
+  // ─── Smart Local Grouping Fallback ──────────────────────────────────────────
+  function fallbackGroupShoppingTrip(allItems) {
+    const storeMap = new Map();
+
+    allItems.forEach(item => {
+      const nameLower = (item.name || '').toLowerCase();
+      const curr = item.currency || 'USD';
+      let storeName = '🏬 ร้านค้าทั่วไป / ห้างสรรพสินค้า';
+      let category = 'ทั่วไป';
+      let locationTip = 'ตรวจสอบสต็อกสินค้าและราคาก่อนเดินทาง';
+
+      if (nameLower.includes('nike') || nameLower.includes('dunk') || nameLower.includes('jordan') || nameLower.includes('adidas') || nameLower.includes('shoe') || nameLower.includes('sneaker') || nameLower.includes('tiger') || nameLower.includes('รองเท้า')) {
+        storeName = '👟 ร้านรองเท้าและสนีกเกอร์ (ABC-Mart / Nike Flagship Store)';
+        category = 'รองเท้า & สตรีทแวร์';
+        locationTip = 'แนะนำสาขาใหญ่เพื่อมีไซส์และสีให้เลือกครบถ้วน';
+      } else if (nameLower.includes('figure') || nameLower.includes('pop mart') || nameLower.includes('gundam') || nameLower.includes('anime') || nameLower.includes('ฟิกเกอร์') || nameLower.includes('art toy') || nameLower.includes('โมเดล')) {
+        storeName = '🧸 ร้านของเล่นและอาร์ตทอย (Pop Mart / Animate / Akihabara)';
+        category = 'ของเล่น & ของสะสม';
+        locationTip = 'สินค้าจำกัดจำนวนชิ้นต่อคน ควรวางแผนซื้อรอบเช้า';
+      } else if (nameLower.includes('serum') || nameLower.includes('cream') || nameLower.includes('mask') || nameLower.includes('lip') || nameLower.includes('เครื่องสำอาง') || nameLower.includes('สกินแคร์') || nameLower.includes('cosmetic')) {
+        storeName = curr === 'KRW' ? '💄 Olive Young (เกาหลี)' : '💄 ร้านยาและเครื่องสำอาง (Matsumoto Kiyoshi / Donki)';
+        category = 'สกินแคร์ & เครื่องสำอาง';
+        locationTip = 'ซื้อครบยอดมี Tax Free คืนเงินสด 8-10% ทันที';
+      } else if (curr === 'JPY') {
+        storeName = '🐧 Don Quijote (ดองกี้ ญี่ปุ่น)';
+        category = 'สินค้าญี่ปุ่นยอดฮิต';
+        locationTip = 'เปิดบริการ 24 ชม. สามารถช้อปรอบดึกเพื่อหลีกเลี่ยงคนแน่น';
+      } else if (curr === 'KRW') {
+        storeName = '🛍️ ย่านช้อปปิ้งเมียงดง / ฮงแด (เกาหลี)';
+        category = 'สินค้าเกาหลียอดฮิต';
+        locationTip = 'พกพาสปอร์ตไปด้วยเสมอเพื่อรับส่วนลดและ Tax Refund';
+      }
+
+      if (!storeMap.has(storeName)) {
+        storeMap.set(storeName, {
+          storeName,
+          category,
+          locationTip,
+          items: new Map(),
+        });
+      }
+
+      const store = storeMap.get(storeName);
+      if (store.items.has(item.name)) {
+        const existing = store.items.get(item.name);
+        existing.totalQty += (Number(item.quantity) || 1);
+        existing.customerBreakdown += `, ${item.customerName} (${item.quantity})`;
+      } else {
+        store.items.set(item.name, {
+          name: item.name,
+          totalQty: Number(item.quantity) || 1,
+          customerBreakdown: `${item.customerName} (${item.quantity})`,
+        });
+      }
+    });
+
+    return Array.from(storeMap.values()).map(s => ({
+      storeName: s.storeName,
+      category: s.category,
+      locationTip: s.locationTip,
+      items: Array.from(s.items.values()),
+    }));
   }
 
   // ─── UI: แสดง AI Shopping Trip Modal/Panel ─────────────────────────────────
@@ -280,13 +339,37 @@ ${itemsSummary}
 
     try {
       let orders = [];
-      if (typeof StorageService !== 'undefined' && StorageService.getOrders) {
-        orders = await StorageService.getOrders();
-      } else if (typeof Storage !== 'undefined' && Storage.getOrders) {
-        orders = await Storage.getOrders();
+      const currentStorage = (typeof window !== 'undefined' && (window.StorageService || window.AppStorage))
+        ? (window.StorageService || window.AppStorage)
+        : (typeof StorageService !== 'undefined' ? StorageService : (typeof Storage !== 'undefined' ? Storage : null));
+
+      if (currentStorage && currentStorage.getOrders) {
+        orders = await currentStorage.getOrders();
       } else {
-        const raw = localStorage.getItem('bahtbridge_orders_data');
+        const raw = (typeof localStorage !== 'undefined') ? localStorage.getItem('bahtbridge_orders_data') : null;
         orders = raw ? JSON.parse(raw) : [];
+      }
+
+      // ถ้าใน LocalStorage ไม่มี ให้ลองดึงจาก Cloud Firestore
+      if ((!orders || orders.length === 0) && typeof window !== 'undefined' && window.FirebaseDB && window.FirebaseDB.getOrders) {
+        try {
+          const cloudOrders = await window.FirebaseDB.getOrders();
+          if (Array.isArray(cloudOrders) && cloudOrders.length > 0) {
+            orders = cloudOrders;
+          }
+        } catch (_) {}
+      }
+
+      if (!orders || orders.length === 0) {
+        panel.innerHTML = `
+          <div style="background:#f0f9ff;border:1px solid #bde0f7;border-radius:12px;padding:16px;text-align:center;color:#0369a1">
+            <div style="font-size:24px;margin-bottom:6px">📦</div>
+            <div style="font-weight:700;font-size:14px">ยังไม่มีรายการออเดอร์ในระบบ</div>
+            <div style="font-size:12px;color:#0284c7;margin-top:4px">กรุณาสร้างออเดอร์อย่างน้อย 1 รายการเพื่อใช้งาน AI จัดกลุ่มซื้อตามร้าน</div>
+            <button class="primary" style="margin-top:10px;font-size:12px;padding:6px 14px;width:auto" onclick="show('create')">＋ สร้างออเดอร์ใหม่</button>
+          </div>
+        `;
+        return;
       }
 
       const stores = await groupShoppingTrip(orders);
