@@ -46,26 +46,33 @@
   /**
    * ส่ง prompt ไปยัง Gemini API พร้อมระบบ Auto-Fallback ลองโมเดลถัดไปทันที
    * @param {string} prompt
+   * @param {Object} [options]
    * @returns {Promise<string>}
    */
-  async function callGemini(prompt) {
+  async function callGemini(prompt, options = {}) {
     const key = getApiKey();
     if (!key) throw new Error('GEMINI_API_KEY ไม่ได้ตั้งค่า');
 
     let lastError = null;
+    const isJson = Boolean(options.json);
 
     for (const model of CANDIDATE_MODELS) {
       const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
       try {
+        const generationConfig = {
+          temperature: 0.2,
+          maxOutputTokens: 2048,
+        };
+        if (isJson) {
+          generationConfig.responseMimeType = 'application/json';
+        }
+
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: {
-              temperature: 0.3,
-              maxOutputTokens: 1024,
-            },
+            generationConfig,
           }),
         });
 
@@ -118,10 +125,14 @@
 ตอบเป็นภาษาไทย รูปแบบ JSON เท่านั้น:
 {"suggestedPrice": <ตัวเลข>, "markup": <เปอร์เซ็นต์>, "advice": "<คำแนะนำ>"}`;
 
-    const raw = await callGemini(prompt);
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error('AI ตอบกลับในรูปแบบที่ไม่ถูกต้อง');
-    return JSON.parse(match[0]);
+    const raw = await callGemini(prompt, { json: true });
+    try {
+      return JSON.parse(raw);
+    } catch (_) {
+      const match = raw.match(/\{[\s\S]*\}/);
+      if (!match) throw new Error('AI ตอบกลับในรูปแบบที่ไม่ถูกต้อง');
+      return JSON.parse(match[0]);
+    }
   }
 
   // ─── Feature 2: สรุปยอดขายรายเดือน ─────────────────────────────────────────
@@ -220,7 +231,7 @@ ${itemsSummary}
   }
 ]`;
 
-    const raw = await callGemini(prompt);
+    const raw = await callGemini(prompt, { json: true });
     console.log('🤖 [Gemini Shopping Trip Response]:', raw);
 
     // Clean markdown code blocks if present (```json ... ```)
@@ -228,7 +239,12 @@ ${itemsSummary}
 
     try {
       // First try direct parse
-      return JSON.parse(cleaned);
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed.stores)) return parsed.stores;
+      if (Array.isArray(parsed.trips)) return parsed.trips;
+      if (Array.isArray(parsed.items)) return parsed.items;
+      return [parsed];
     } catch (_) {
       // Second try: extract array bracket [...]
       const match = cleaned.match(/\[[\s\S]*\]/);
