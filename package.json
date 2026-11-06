@@ -9,6 +9,8 @@
     "build": "node build.js",
     "test": "node --test tests/",
     "test:coverage": "node --test --experimental-test-coverage tests/",
+    "coverage": "node tool/check_coverage.js --min 70",
+    "check-coverage": "node tool/check_coverage.js --min 70",
     "cap:sync": "node build.js && npx cap sync",
     "cap:build": "node build.js && npx cap sync android"
   },

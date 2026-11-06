@@ -150,7 +150,54 @@ describe('SupabaseStorage Layer Mocked Tests', () => {
     // Test deleteOrder from Supabase
     await SupabaseStorage.deleteOrder('#BR-ONLINE-01');
 
+    // Test queue error handling and offline queue drain
+    global.window.navigator = { onLine: false };
+    await SupabaseStorage.saveOrder({ customerName: 'ออฟไลน์คิว' });
+
+    global.window.navigator = { onLine: true };
+    await SupabaseStorage.processOfflineQueue();
+
     // Reset window.AuthService mock
+    global.window.AuthService = {
+      getSupabase: () => null,
+      isAuthenticated: () => false,
+    };
+  });
+
+  test('SupabaseStorage error branches and recovery', async () => {
+    // Mock Supabase with errors
+    const errorClient = {
+      from: () => ({
+        select: () => ({
+          order: () => Promise.resolve({ data: null, error: new Error('DB Down') }),
+          single: () => Promise.resolve({ data: null, error: new Error('Row not found') }),
+          eq: () => ({ single: () => Promise.resolve({ data: null, error: new Error('Order error') }) }),
+        }),
+        insert: () => Promise.resolve({ error: new Error('Insert failed') }),
+        upsert: () => Promise.resolve({ error: new Error('Upsert failed') }),
+        delete: () => ({ eq: () => Promise.resolve({ error: new Error('Delete failed') }) }),
+      }),
+    };
+
+    global.window.AuthService = {
+      getSupabase: () => errorClient,
+      isAuthenticated: () => true,
+      getCurrentUser: async () => ({ id: 'usr-err' }),
+    };
+
+    // Should gracefully fallback to LocalStorage
+    const orders = await SupabaseStorage.getOrders();
+    assert.ok(Array.isArray(orders));
+
+    const settings = await SupabaseStorage.getSettings();
+    assert.ok(settings);
+
+    // Save with error should queue
+    await SupabaseStorage.saveOrder({ customerName: 'เทสต์ล้มเหลว' });
+    await SupabaseStorage.saveSettings({ defaultShipping: 200 });
+    await SupabaseStorage.deleteOrder('#NON-EXIST');
+
+    // Reset
     global.window.AuthService = {
       getSupabase: () => null,
       isAuthenticated: () => false,
