@@ -21,7 +21,7 @@ const EXCLUDED_FILES = new Set([
   'capacitor.config.json',
 ]);
 
-const ALLOWED_EXTS = new Set(['.html', '.css', '.js', '.json', '.svg']);
+const ALLOWED_EXTS = new Set(['.html', '.css', '.js', '.json', '.svg', '.png', '.jpg', '.jpeg', '.webp']);
 
 const copiedFiles = [];
 
