@@ -55,6 +55,9 @@
 
       setupAuthButtons();
       updateSyncStatus(true);
+
+      // จัดการผลลัพธ์จาก Google Redirect Sign-In (สำหรับ Capacitor Android)
+      handleRedirectResult();
     } catch (err) {
       console.warn('⚠️ [FirebaseDB] Initialization failed:', err);
     }
@@ -243,7 +246,7 @@
   async function signInWithGoogle() {
     if (!auth) init();
     if (!auth) {
-      alert('Firebase ยังไม่ได้ตั้งค่า');
+      setLoginMsg('Firebase ยังไม่ได้ตั้งค่า', true);
       return;
     }
 
@@ -252,16 +255,61 @@
       provider.addScope('profile');
       provider.addScope('email');
 
-      // ใช้ signInWithPopup
-      const result = await auth.signInWithPopup(provider);
-      currentUser = result.user;
-      if (typeof window !== 'undefined' && window.show) {
-        window.show('dashboard');
+      // ตรวจสอบว่าอยู่ใน Capacitor Native (Android/iOS) หรือเปล่า
+      const isNative = typeof window !== 'undefined' &&
+        window.Capacitor && window.Capacitor.isNativePlatform &&
+        window.Capacitor.isNativePlatform();
+
+      if (isNative) {
+        // บน Android WebView ใช้ signInWithRedirect (Popup ไม่รองรับ)
+        setLoginMsg('กำลังเปิดหน้าล็อกอิน Google...', false);
+        await auth.signInWithRedirect(provider);
+        // หน้าจะ redirect ออกไป — ผลลัพธ์จะถูกจัดการใน handleRedirectResult()
+      } else {
+        // บน Web Browser ใช้ signInWithPopup ตามปกติ
+        setLoginMsg('กำลังเปิด Google Sign-In...', false);
+        const result = await auth.signInWithPopup(provider);
+        currentUser = result.user;
+        if (typeof window !== 'undefined' && window.show) {
+          window.show('dashboard');
+        }
       }
     } catch (err) {
       console.error('Google Sign-in error:', err);
-      if (err.code !== 'auth/popup-closed-by-user') {
-        alert('เข้าสู่ระบบด้วย Google ไม่สำเร็จ: ' + err.message);
+      let thMsg = 'เข้าสู่ระบบด้วย Google ไม่สำเร็จ';
+      if (err.code === 'auth/popup-closed-by-user' || err.code === 'auth/cancelled-popup-request') {
+        // ผู้ใช้ปิด popup เอง — ไม่ต้องแสดง error
+        setLoginMsg('', false);
+        return;
+      } else if (err.code === 'auth/popup-blocked') {
+        thMsg = 'Browser บล็อก Popup กรุณาอนุญาต Popup แล้วลองใหม่';
+      } else if (err.code === 'auth/network-request-failed') {
+        thMsg = 'ไม่มีการเชื่อมต่ออินเทอร์เน็ต';
+      }
+      setLoginMsg(thMsg, true);
+      if (window.UI && window.UI.showToast) {
+        window.UI.showToast(thMsg, 'error');
+      }
+    }
+  }
+
+  // ─── Handle Redirect Result (สำหรับ Capacitor/Android) ──────────────────────
+  async function handleRedirectResult() {
+    if (!auth) return;
+    try {
+      const result = await auth.getRedirectResult();
+      if (result && result.user) {
+        currentUser = result.user;
+        console.log('✅ [Firebase] Google Redirect Sign-in success:', result.user.email);
+        if (typeof window !== 'undefined' && window.show) {
+          window.show('dashboard');
+        }
+      }
+    } catch (err) {
+      // getRedirectResult จะ throw ถ้า redirect ล้มเหลว
+      if (err.code && err.code !== 'auth/no-current-user') {
+        console.error('Redirect result error:', err);
+        setLoginMsg('เข้าสู่ระบบด้วย Google ไม่สำเร็จ: ' + err.message, true);
       }
     }
   }
@@ -324,6 +372,16 @@
     const signUpBtn = document.getElementById('btn-signup-email');
     if (signUpBtn && emailInput && passwordInput) {
       signUpBtn.onclick = () => {
+        // ตรวจสอบ Confirm Password ถ้ามี
+        const confirmInput = document.getElementById('login-confirm-password');
+        if (confirmInput && confirmInput.offsetParent !== null) {
+          // confirmField กำลังแสดงอยู่
+          if (confirmInput.value !== passwordInput.value) {
+            setLoginMsg('รหัสผ่านและยืนยันรหัสผ่านไม่ตรงกัน', true);
+            confirmInput.focus();
+            return;
+          }
+        }
         signUpWithEmail(emailInput.value, passwordInput.value);
       };
     }
@@ -416,6 +474,7 @@
     signInWithEmail,
     signUpWithEmail,
     signInWithGoogle,
+    handleRedirectResult,
     signOut,
     saveOrder,
     getOrders,

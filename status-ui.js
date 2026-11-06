@@ -50,30 +50,41 @@
       sheet = document.createElement('div');
       sheet.id = 'status-sheet';
       sheet.className = 'sheet';
+      sheet.setAttribute('role', 'dialog');
+      sheet.setAttribute('aria-modal', 'true');
+      sheet.setAttribute('aria-hidden', 'true');
       sheet.innerHTML = `
         <div class="sheet-backdrop"></div>
         <div class="sheet-content">
           <div class="sheet-handle"></div>
           <div class="sheet-title">
             <span>เปลี่ยนสถานะคำสั่งซื้อ</span>
-            <button class="sheet-close" type="button" aria-label="ปิด">✕</button>
+            <button class="sheet-close" id="btn-close-sheet" type="button" aria-label="ปิด">✕</button>
           </div>
           <p class="sub" style="margin-bottom:14px;font-size:12px">เลือกสถานะการดำเนินการของคำสั่งซื้อนี้</p>
-          <div id="status-sheet-options" style="display:flex;flex-direction:column;gap:8px"></div>
+          <div id="status-options" style="display:flex;flex-direction:column;gap:8px"></div>
         </div>
       `;
       const phone = document.querySelector('.phone') || document.body;
       phone.appendChild(sheet);
-
-      sheet.querySelector('.sheet-close').onclick = () => UI.closeSheet('status-sheet');
-      sheet.querySelector('.sheet-backdrop').onclick = () => UI.closeSheet('status-sheet');
     }
+
+    // Attach or re-attach close listeners
+    sheet.querySelectorAll('.sheet-close, #btn-close-sheet').forEach((el) => {
+      el.onclick = () => UI.closeSheet('status-sheet');
+    });
+    const backdrop = sheet.querySelector('.sheet-backdrop');
+    if (backdrop) {
+      backdrop.onclick = () => UI.closeSheet('status-sheet');
+    }
+
     return sheet;
   }
 
   function renderStatusSheetOptions(order, onStatusUpdated) {
     const sheet = ensureStatusSheet();
-    const container = sheet.querySelector('#status-sheet-options');
+    const container = sheet.querySelector('#status-options') || sheet.querySelector('#status-sheet-options');
+    if (!container) return;
     container.innerHTML = '';
 
     const allStatuses = [
@@ -115,7 +126,14 @@
 
           try {
             const updated = Status.applyTransition(order, st);
-            await Storage.saveOrder(updated);
+            const currentStorage = window.StorageService || window.AppStorage || Storage;
+            await currentStorage.saveOrder(updated);
+
+            // ซิงค์ Firestore เบื้องหลัง
+            if (typeof window !== 'undefined' && window.FirebaseDB && window.FirebaseDB.saveOrder) {
+              window.FirebaseDB.saveOrder(updated).catch(() => {});
+            }
+
             UI.showToast(`เปลี่ยนสถานะเป็น "${label}" เรียบร้อย`, 'success');
             if (typeof onStatusUpdated === 'function') {
               onStatusUpdated(updated);
@@ -275,15 +293,15 @@
         <div style="display:flex;justify-content:space-between;align-items:center">
           <div>
             <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px">สถานะการดำเนินการ</div>
-            <span class="badge" data-status="${esc(order.fulfillmentStatus || 'pending_purchase')}" style="font-size:12px;padding:6px 12px">
-              ${esc(fulfillmentLabel)}
+            <span class="badge" id="status-badge-trigger" data-status="${esc(order.fulfillmentStatus || 'pending_purchase')}" style="font-size:12px;padding:6px 12px;cursor:pointer" title="แตะเพื่อเปลี่ยนสถานะ">
+              ${esc(fulfillmentLabel)} ▾
             </span>
           </div>
           <button class="secondary" type="button" style="width:auto;padding:8px 14px;font-size:12px" id="btn-open-status-sheet">
             ⚙️ เปลี่ยนสถานะ
           </button>
         </div>
-        ${stepperHtml}
+        <div id="stepper-trigger" style="cursor:pointer" title="แตะเพื่อเปลี่ยนสถานะ">${stepperHtml}</div>
         ${alertHtml}
       </div>
 
@@ -300,8 +318,10 @@
             <b style="color:var(--green);font-size:17px">${money(summary.paidThb)}</b>
           </div>
           <div class="stat">
-            <span class="muted" style="font-size:11px">ค้างชำระ</span>
-            <b style="color:${summary.remainingThb > 0 ? 'var(--red)' : 'var(--muted)'};font-size:17px">${money(summary.remainingThb)}</b>
+            <span class="muted" style="font-size:11px">${summary.overpaidThb > 0 ? 'โอนเกิน (ต้องทอน)' : 'ค้างชำระ'}</span>
+            <b style="color:${summary.overpaidThb > 0 ? 'var(--blue, #2389ec)' : (summary.remainingThb > 0 ? 'var(--red)' : 'var(--muted)')};font-size:17px">
+              ${summary.overpaidThb > 0 ? money(summary.overpaidThb) : money(summary.remainingThb)}
+            </b>
           </div>
         </div>
 
@@ -382,13 +402,17 @@
     // ─── Attach Event Listeners ─────────────────────────────────────────────
 
     // Open Status Sheet
+    const triggerStatusSheet = () => {
+      renderStatusSheetOptions(order, refresh);
+      UI.openSheet('status-sheet');
+    };
+
     const openStatusBtn = container.querySelector('#btn-open-status-sheet');
-    if (openStatusBtn) {
-      openStatusBtn.onclick = () => {
-        renderStatusSheetOptions(order, refresh);
-        UI.openSheet('status-sheet');
-      };
-    }
+    if (openStatusBtn) openStatusBtn.onclick = triggerStatusSheet;
+    const badgeTrigger = container.querySelector('#status-badge-trigger');
+    if (badgeTrigger) badgeTrigger.onclick = triggerStatusSheet;
+    const stepperTrigger = container.querySelector('#stepper-trigger');
+    if (stepperTrigger) stepperTrigger.onclick = triggerStatusSheet;
 
     // Submit Payment
     const submitPayBtn = container.querySelector('#btn-submit-payment');

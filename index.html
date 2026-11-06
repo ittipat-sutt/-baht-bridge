@@ -297,16 +297,22 @@
           <div class="sticky">
             <button class="primary" id="btn-confirm-order" onclick="confirmCurrentOrder()">ยืนยันออเดอร์</button>
             <button class="outline" style="margin-top:8px" onclick="shareOrderSummary()">↗ แชร์ยอดให้ลูกค้า</button>
+            <button class="outline" id="btn-cancel-order" style="margin-top:8px;color:var(--red,#df4c53);border-color:#fecaca;display:none" onclick="cancelCurrentOrder()">🗑 ยกเลิกออเดอร์</button>
           </div>
         </div>
 
         <!-- Bottom Sheet for Status Update -->
-        <div id="status-sheet" class="hidden" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#fff;border-radius:24px 24px 0 0;box-shadow:0 -10px 30px rgba(0,0,0,0.15);padding:20px;z-index:999">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
-            <strong style="font-size:16px">เปลี่ยนสถานะออเดอร์</strong>
-            <button id="btn-close-sheet" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)">✕</button>
+        <div id="status-sheet" class="sheet" role="dialog" aria-modal="true" aria-hidden="true">
+          <div class="sheet-backdrop"></div>
+          <div class="sheet-content">
+            <div class="sheet-handle"></div>
+            <div class="sheet-title">
+              <span>เปลี่ยนสถานะคำสั่งซื้อ</span>
+              <button class="sheet-close" id="btn-close-sheet" type="button" aria-label="ปิด">✕</button>
+            </div>
+            <p class="sub" style="margin-bottom:14px;font-size:12px">เลือกสถานะการดำเนินการของคำสั่งซื้อนี้</p>
+            <div id="status-options" style="display:flex;flex-direction:column;gap:8px"></div>
           </div>
-          <div id="status-options" style="display:grid;gap:8px"></div>
         </div>
       </section>
 
@@ -531,12 +537,25 @@
             </div>
             <span></span>
           </div>
-          <div style="text-align:center;padding:16px 0 18px">
-            <div style="font-size:38px;margin-bottom:8px">🔐</div>
-            <h1 class="page-title">เข้าสู่ระบบ Firebase</h1>
-            <p class="sub">เข้าสู่ระบบเพื่อซิงค์ข้อมูลร้านค้าและออเดอร์สู่ Google Cloud Firestore</p>
+
+          <!-- Tab Switcher Login / Register -->
+          <div style="display:flex;border-radius:14px;overflow:hidden;border:1px solid var(--line);margin:12px 0 16px;background:#f4f8ff">
+            <button id="tab-login" type="button"
+              style="flex:1;padding:11px;font-size:14px;font-weight:700;border:none;cursor:pointer;border-radius:12px 0 0 12px;background:var(--navy);color:#fff;transition:all .2s"
+              onclick="switchAuthTab('login')">🔑 เข้าสู่ระบบ</button>
+            <button id="tab-register" type="button"
+              style="flex:1;padding:11px;font-size:14px;font-weight:700;border:none;cursor:pointer;border-radius:0 12px 12px 0;background:transparent;color:var(--navy);transition:all .2s"
+              onclick="switchAuthTab('register')">📝 สมัครสมาชิก</button>
           </div>
+
           <div class="form-card">
+            <!-- Icon + Title (dynamic) -->
+            <div style="text-align:center;padding:8px 0 14px">
+              <div id="auth-icon" style="font-size:34px;margin-bottom:6px">🔐</div>
+              <div id="auth-title" style="font-size:17px;font-weight:700;color:var(--navy)">เข้าสู่ระบบ</div>
+              <div id="auth-subtitle" class="sub" style="font-size:12px;margin-top:4px">ซิงค์ข้อมูลร้านค้าสู่ Google Cloud Firestore</div>
+            </div>
+
             <div class="field">
               <label>อีเมล (Email)</label>
               <input class="input" id="login-email" type="email" placeholder="merchant@example.com" autocomplete="username" />
@@ -545,11 +564,19 @@
               <label>รหัสผ่าน (Password)</label>
               <input class="input" id="login-password" type="password" placeholder="อย่างน้อย 6 ตัวอักษร" autocomplete="current-password" />
             </div>
-            <button class="primary" id="btn-login-password" style="margin-bottom:8px">
-              🔑 เข้าสู่ระบบด้วย Email & Password
+            <!-- Confirm Password (เฉพาะ Register mode) -->
+            <div class="field hidden" id="confirm-password-field" style="display:none">
+              <label>ยืนยันรหัสผ่าน <span style="color:var(--red)">*</span></label>
+              <input class="input" id="login-confirm-password" type="password" placeholder="กรอกรหัสผ่านอีกครั้ง" autocomplete="new-password" />
+            </div>
+
+            <!-- Login button (แสดงใน login mode) -->
+            <button class="primary" id="btn-login-password" style="margin-bottom:10px">
+              🔑 เข้าสู่ระบบ
             </button>
-            <button class="outline" id="btn-signup-email" style="margin-bottom:14px;border-color:#c9dcf0;color:var(--navy)">
-              📝 สมัครสมาชิกใหม่ (Sign Up)
+            <!-- Sign Up button (แสดงใน register mode) -->
+            <button class="primary hidden" id="btn-signup-email" style="display:none;margin-bottom:10px;background:#16a36a;box-shadow:0 8px 17px #16a36a38">
+              🎉 สมัครสมาชิกใหม่
             </button>
 
             <div style="display:flex;align-items:center;gap:10px;margin:10px 0;color:var(--muted);font-size:12px">
@@ -561,7 +588,7 @@
             <button class="outline" id="btn-login-google" style="margin-bottom:12px;display:flex;align-items:center;justify-content:center;gap:8px">
               🌐 เข้าสู่ระบบด้วย Google
             </button>
-            <div id="login-msg" style="font-size:13px;text-align:center;color:var(--muted);min-height:20px;line-height:1.4"></div>
+            <div id="login-msg" style="font-size:13px;text-align:center;min-height:20px;line-height:1.5;padding:4px 0"></div>
           </div>
         </div>
         <nav class="bottom">
@@ -571,8 +598,7 @@
         </nav>
       </section>
 
-      <!-- ========================================== -->
-      <!-- 10. SUCCESS SCREEN                        -->
+            <!-- 10. SUCCESS SCREEN                        -->
       <!-- ========================================== -->
       <section class="screen" id="success">
         <div class="screen-body">

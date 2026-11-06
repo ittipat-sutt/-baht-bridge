@@ -67,6 +67,49 @@ function updateNavActive(screenId) {
   });
 }
 
+// ─── Auth Tab Switcher (Login / Register) ─────────────────────────────────────
+function switchAuthTab(mode) {
+  const tabLogin = document.getElementById('tab-login');
+  const tabRegister = document.getElementById('tab-register');
+  const btnLogin = document.getElementById('btn-login-password');
+  const btnSignup = document.getElementById('btn-signup-email');
+  const confirmField = document.getElementById('confirm-password-field');
+  const authIcon = document.getElementById('auth-icon');
+  const authTitle = document.getElementById('auth-title');
+  const authSubtitle = document.getElementById('auth-subtitle');
+  const passwordInput = document.getElementById('login-password');
+  const loginMsg = document.getElementById('login-msg');
+
+  if (loginMsg) loginMsg.textContent = '';
+
+  if (mode === 'register') {
+    // Switch to Register mode
+    if (tabLogin) { tabLogin.style.background = 'transparent'; tabLogin.style.color = 'var(--navy)'; }
+    if (tabRegister) { tabRegister.style.background = 'var(--navy)'; tabRegister.style.color = '#fff'; }
+    if (btnLogin) btnLogin.style.display = 'none';
+    if (btnSignup) btnSignup.style.display = 'block';
+    if (confirmField) { confirmField.style.display = 'block'; confirmField.classList.remove('hidden'); }
+    if (authIcon) authIcon.textContent = '📝';
+    if (authTitle) authTitle.textContent = 'สมัครสมาชิกใหม่';
+    if (authSubtitle) authSubtitle.textContent = 'สร้างบัญชีเพื่อใช้งาน BahtBridge บนทุกอุปกรณ์';
+    if (passwordInput) passwordInput.setAttribute('autocomplete', 'new-password');
+  } else {
+    // Switch to Login mode
+    if (tabLogin) { tabLogin.style.background = 'var(--navy)'; tabLogin.style.color = '#fff'; }
+    if (tabRegister) { tabRegister.style.background = 'transparent'; tabRegister.style.color = 'var(--navy)'; }
+    if (btnLogin) btnLogin.style.display = 'block';
+    if (btnSignup) btnSignup.style.display = 'none';
+    if (confirmField) { confirmField.style.display = 'none'; confirmField.classList.add('hidden'); }
+    if (authIcon) authIcon.textContent = '🔐';
+    if (authTitle) authTitle.textContent = 'เข้าสู่ระบบ';
+    if (authSubtitle) authSubtitle.textContent = 'ซิงค์ข้อมูลร้านค้าสู่ Google Cloud Firestore';
+    if (passwordInput) passwordInput.setAttribute('autocomplete', 'current-password');
+  }
+}
+if (typeof window !== 'undefined') {
+  window.switchAuthTab = switchAuthTab;
+}
+
 async function show(id) {
   document.querySelectorAll('.screen').forEach((screen) => screen.classList.remove('active'));
   const target = document.getElementById(id);
@@ -507,7 +550,21 @@ function populateDetailScreen(order) {
   }
   // Person 2 hook: Mount StatusUI controls (stepper, payments, shipments, timeline)
   if (typeof window !== 'undefined' && window.StatusUI) {
-    window.StatusUI.mount(order);
+    window.StatusUI.mount(order, (updatedOrder) => {
+      activeViewingOrder = updatedOrder;
+      renderDashboard().catch(() => {});
+      renderOrdersList().catch(() => {});
+    });
+  }
+
+  // แสดง/ซ่อนปุ่มยกเลิกออเดอร์ (เฉพาะออเดอร์ที่บันทึกแล้ว และยังไม่ถูกยกเลิก)
+  const cancelBtn = document.getElementById('btn-cancel-order');
+  if (cancelBtn) {
+    if (!order.isDraft && order.fulfillmentStatus !== 'cancelled') {
+      cancelBtn.style.display = 'block';
+    } else {
+      cancelBtn.style.display = 'none';
+    }
   }
 }
 
@@ -632,6 +689,50 @@ async function viewOrderDetail(orderId) {
   populateDetailScreen(activeViewingOrder);
   populateCustomerScreen(activeViewingOrder);
   await show('detail');
+}
+
+// ─── Cancel Order ──────────────────────────────────────────────────────────────
+async function cancelCurrentOrder() {
+  if (!activeViewingOrder || activeViewingOrder.isDraft) return;
+  if (activeViewingOrder.fulfillmentStatus === 'cancelled') {
+    notify('ออเดอร์นี้ถูกยกเลิกแล้ว', 'info');
+    return;
+  }
+
+  const confirmed = confirm('ต้องการยกเลิกออเดอร์นี้ใช่หรือไม่?\n\nการยกเลิกไม่สามารถเลิกทำได้');
+  if (!confirmed) return;
+
+  try {
+    const updated = {
+      ...activeViewingOrder,
+      fulfillmentStatus: 'cancelled',
+      status: 'ยกเลิกแล้ว',
+      orderStatus: 'cancelled',
+      cancelledAt: new Date().toISOString(),
+    };
+
+    // เพิ่ม history entry
+    if (!Array.isArray(updated.history)) updated.history = [];
+    updated.history.push({ type: 'cancelled', note: 'ยกเลิกออเดอร์', ts: new Date().toISOString() });
+
+    await Storage.saveOrder(updated);
+
+    // Sync to Firebase (background)
+    if (typeof window !== 'undefined' && window.FirebaseDB && window.FirebaseDB.saveOrder) {
+      window.FirebaseDB.saveOrder(updated).catch(() => {});
+    }
+
+    activeViewingOrder = updated;
+    notify('ยกเลิกออเดอร์เรียบร้อยแล้ว', 'success');
+    await renderDashboard();
+    await renderOrdersList();
+    await show('orders');
+  } catch (err) {
+    notify('ยกเลิกออเดอร์ไม่สำเร็จ: ' + (err.message || err), 'error');
+  }
+}
+if (typeof window !== 'undefined') {
+  window.cancelCurrentOrder = cancelCurrentOrder;
 }
 
 // ─── Render Dashboard ─────────────────────────────────────────────────────────

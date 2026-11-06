@@ -393,7 +393,9 @@
     const totalThb = Number(order.totalThb || 0);
     const payments = Array.isArray(order.payments) ? order.payments : [];
     const paidThb = payments.reduce((sum, p) => sum + (Number(p.amount) || 0), 0);
-    const remainingThb = Math.max(0, Math.round((totalThb - paidThb) * 100) / 100);
+    const rawDiff = Math.round((totalThb - paidThb) * 100) / 100;
+    const remainingThb = Math.max(0, rawDiff);
+    const overpaidThb = rawDiff < 0 ? Math.abs(rawDiff) : 0;
 
     return {
       totalItems,
@@ -404,6 +406,7 @@
       totalThb,
       paidThb,
       remainingThb,
+      overpaidThb,
       isFullyPaid: remainingThb <= 0.01,
     };
   }
